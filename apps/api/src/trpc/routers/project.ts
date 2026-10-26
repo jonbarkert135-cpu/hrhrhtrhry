@@ -65,10 +65,15 @@ export const projectRouter = router({
     .input(
       z
         .object({
-          limit: z.number().int().min(1).max(200).default(50),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(200, 'Number must be less than or equal to 200')
+            .default(50),
           includeArchived: z.boolean().default(false),
         })
-        .default({}),
+        .prefault({}),
     )
     .query(async ({ ctx, input }) => {
       const projects = await prisma.project.findMany({
