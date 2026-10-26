@@ -24,9 +24,11 @@ export const RichTextNodeJsonSchema: z.ZodType<RichTextNodeJson> = z.lazy(() =>
   z.object({
     type: z.string().min(1),
     text: z.string().optional(),
-    attrs: z.record(z.unknown()).optional(),
+    attrs: z.record(z.string(), z.unknown()).optional(),
     marks: z
-      .array(z.object({ type: z.string().min(1), attrs: z.record(z.unknown()).optional() }))
+      .array(
+        z.object({ type: z.string().min(1), attrs: z.record(z.string(), z.unknown()).optional() }),
+      )
       .optional(),
     content: z.array(RichTextNodeJsonSchema).optional(),
   }),

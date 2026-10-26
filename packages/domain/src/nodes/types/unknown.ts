@@ -14,7 +14,7 @@ import { clean, defineNodeType } from '../define.ts';
 import { UNKNOWN_NODE_TYPE } from '../../entities/node.ts';
 import type { NodeTypeDefinition } from '../types.ts';
 
-export const UnknownDataSchema = z.record(z.unknown()).default({});
+export const UnknownDataSchema = z.record(z.string(), z.unknown()).default({});
 
 export type UnknownData = z.infer<typeof UnknownDataSchema>;
 

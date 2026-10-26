@@ -311,7 +311,13 @@ export const boardRouter = router({
 
   /** Fire-and-forget from the UI after a save; not audited, same reason as `touchOpened`. */
   reportCounts: orgProcedure('editor')
-    .input(z.object({ boardId: Id, nodeCount: z.number(), edgeCount: z.number() }))
+    .input(
+      z.object({
+        boardId: Id,
+        nodeCount: z.number().or(z.literal(Infinity)).or(z.literal(-Infinity)),
+        edgeCount: z.number().or(z.literal(Infinity)).or(z.literal(-Infinity)),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       await requireBoard(input.boardId, ctx.org.id);
       await prisma.board.update({

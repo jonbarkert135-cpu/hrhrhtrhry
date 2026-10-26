@@ -29,7 +29,7 @@ export const FileManifestSchema = AssetSchema.omit({ createdAt: true })
   .extend({
     /** Present only inside a `.raven` archive; a bare JSON export sets null. */
     path: z.string().nullable().default(null),
-    metadata: z.record(z.unknown()).default({}),
+    metadata: z.record(z.string(), z.unknown()).default({}),
   })
   .passthrough();
 
@@ -46,11 +46,11 @@ export const BoardExportV1Schema = z
     nodes: z.array(NodeSchema),
     edges: z.array(EdgeSchema),
     groups: z.array(GroupSchema),
-    richtext: z.record(RichTextDocJsonSchema),
+    richtext: z.record(z.string(), RichTextDocJsonSchema),
     order: z.array(z.string()),
     files: z.array(FileManifestSchema),
-    comments: z.array(z.record(z.unknown())),
-    extensions: z.record(z.unknown()),
+    comments: z.array(z.record(z.string(), z.unknown())),
+    extensions: z.record(z.string(), z.unknown()),
   })
   .passthrough();
 

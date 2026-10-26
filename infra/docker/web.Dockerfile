@@ -1,5 +1,12 @@
 # syntax=docker/dockerfile:1
 # Build context is the repository root. Output is static assets served by caddy.
+# Rebuild the same Caddy release with the patched Go toolchain and HTTP/2 module.
+# The upstream 2-alpine binary still embeds Go 1.26.8 / x/net v0.59.0.
+FROM golang:1.27.3-alpine AS caddy-build
+ENV GOMAXPROCS=2 CGO_ENABLED=0
+RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
+RUN xcaddy build v2.11.7 --replace golang.org/x/net=golang.org/x/net@v0.60.0 --output /usr/bin/caddy
+
 FROM node:22-alpine AS build
 ENV PNPM_HOME=/pnpm CI=1
 RUN corepack enable
@@ -32,7 +39,8 @@ FROM caddy:2-alpine AS runtime
 # would otherwise replay this layer with the package set of an earlier build, which is exactly how
 # libcrypto3/libssl3 3.5.7-r0 (CVE-2026-14456) survived a run that already ran `apk upgrade`.
 # Bump the date whenever Trivy reports a fixable Alpine package.
-RUN apk upgrade --no-cache # package index refreshed 2026-08-31
+RUN apk upgrade --no-cache # package index refreshed 2026-10-26
+COPY --from=caddy-build /usr/bin/caddy /usr/bin/caddy
 COPY --from=build --chown=65532:65532 /repo/apps/web/dist /srv
 COPY infra/docker/web.Caddyfile /etc/caddy/Caddyfile
 USER 65532:65532

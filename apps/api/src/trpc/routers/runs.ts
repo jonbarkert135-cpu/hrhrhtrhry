@@ -68,7 +68,7 @@ export const runsRouter = router({
         projectId: Id,
         boardId: Id,
         anchorNodeId: Id.optional(),
-        input: z.record(z.unknown()),
+        input: z.record(z.string(), z.unknown()),
         targets: z
           .array(
             z.object({
@@ -269,7 +269,7 @@ export const runsRouter = router({
           cursor: Id.optional(),
           limit: z.number().int().min(1).max(100).default(25),
         })
-        .default({}),
+        .prefault({}),
     )
     .query(async ({ ctx, input }) => {
       const runs = await prisma.integrationRun.findMany({
@@ -427,7 +427,9 @@ export const proposalsRouter = router({
       z.object({
         proposalId: Id,
         selectedItemIds: z.array(z.string().max(120)).max(5000),
-        conflictResolutions: z.record(z.enum(['keep', 'replace', 'keep_both'])).default({}),
+        conflictResolutions: z
+          .record(z.string(), z.enum(['keep', 'replace', 'keep_both']))
+          .prefault({}),
       }),
     )
     .mutation(async ({ ctx, input }) => {
