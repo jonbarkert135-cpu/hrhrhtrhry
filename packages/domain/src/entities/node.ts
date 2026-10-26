@@ -47,12 +47,12 @@ export const NodeSchema = z
     starred: z.boolean().default(false),
     status: z.enum(NODE_STATUSES).default('active'),
     provenance: ProvenanceSchema,
-    enrichment: EnrichmentSchema.default({}),
+    enrichment: EnrichmentSchema.prefault({}),
     version: z.number().int().min(1).default(1),
     createdAt: IsoDateSchema,
     updatedAt: IsoDateSchema,
     deletedAt: IsoDateSchema.nullable().default(null),
-    data: z.record(z.unknown()).default({}),
+    data: z.record(z.string(), z.unknown()).default({}),
   })
   .passthrough();
 

@@ -69,7 +69,7 @@ export const zPluginManifest = z
     }),
     license: z.string(),
     description: z.string().min(20).max(400),
-    permissions: z.array(zPluginPermission).min(1),
+    permissions: z.array(zPluginPermission).min(1, 'Array must contain at least 1 element(s)'),
     contributes: z
       .object({
         commands: z.array(zContributionCommand).max(50).default([]),

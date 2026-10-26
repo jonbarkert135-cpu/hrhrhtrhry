@@ -58,7 +58,7 @@ export const RepositoryAnalysisSchema = z.object({
         rule: z.string(),
       }),
     ),
-    runtimeVersions: z.record(z.string()),
+    runtimeVersions: z.record(z.string(), z.string()),
   }),
 
   dependencies: z.array(

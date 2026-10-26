@@ -56,7 +56,7 @@ export const EdgeSchema = z
     tags: z.array(z.string()).max(64).default([]),
     waypoints: z.array(z.object({ x: finite, y: finite })).default([]),
     manualRoute: z.boolean().default(false),
-    style: EdgeStyleSchema.default({}),
+    style: EdgeStyleSchema.prefault({}),
     locked: z.boolean().default(false),
     hidden: z.boolean().default(false),
     status: z.enum(['active', 'archived', 'deleted']).default('active'),
@@ -65,7 +65,7 @@ export const EdgeSchema = z
     createdAt: IsoDateSchema,
     updatedAt: IsoDateSchema,
     deletedAt: IsoDateSchema.nullable().default(null),
-    data: z.record(z.unknown()).default({}),
+    data: z.record(z.string(), z.unknown()).default({}),
   })
   .passthrough();
 
