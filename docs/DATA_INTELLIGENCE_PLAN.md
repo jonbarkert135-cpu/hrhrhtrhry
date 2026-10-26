@@ -211,7 +211,29 @@ Permissions, protection, required reviews, удалённый CI и merge SHA **
 не применяет runtime policy. Для продолжения нужны доступный API и проверенная генерация Prisma;
 если после сетевого исправления API вернёт 401, обновить GitHub binding в настройках среды.
 
-После снятия блокировок: generate → повторить lint/typecheck/test/build → server services и
-migrations на disposable DB → server E2E → PR checks → squash merge без обхода review/protection →
-проверить remote main SHA и CI. Этап 00 до этого **не завершён**; этап 01 не начинать автоматически
-вместо заблокированного review/merge. Новые пользовательские сценарии в этом PR не реализуются.
+### Повторная проверка после восстановления доступа
+
+Сетевые блокировки выше относятся к первоначальному запуску. После применения настроек
+`prisma generate` прошёл с checksum/TLS verification, API GitHub подтвердил push/admin permissions.
+Branch API сообщает `protected: false`, rulesets пуст; чтение отдельного protection endpoint всё
+ещё возвращает 403. Это не используется для обхода CI или review.
+
+На исходном SHA повторно прошли **lint, typecheck, build**, 10 migrations и seed на disposable
+PostgreSQL, `/readyz` подтвердил DB/Redis. Локальный server-mode Playwright с установленным
+системным Chromium (временный config в ignored node_modules, без изменения repository config)
+дал **18 passed**. Три из этих тестов только документируют неисполненные integrations scenarios:
+runner/worker/integrations не были запущены. Поэтому это **15 функциональных проверок**, а не
+доказательство работы всего server stack. MinIO image pull отклонён registry; S3/files pipeline
+остаётся **unverified**. Полный локальный `pnpm test` с ошибочно экспортированным `NODE_ENV=test`
+остановился на production bundle budget (277.1 KB); это ошибка окружения проверки, не установленный
+дефект приложения. Отдельные web/domain suites и CI unit прошли. Для повторения CI workflow
+использовать `CI=1` и disposable services, не экспортировать `NODE_ENV=test` в Vite build.
+
+Документационный PR [#84](https://github.com/jonbarkert135-cpu/hrhrhtrhry/pull/84) открыт.
+Его CI на `73c5fee` подтвердил lint/typecheck/unit/coverage/build/e2e/visual/bench/migrate-check,
+но **audit и оба Docker scans failed**. Локальный production audit подтверждает 21 high и
+2 critical advisory в исходном lockfile. Отдельный prerequisite
+[PR #85](https://github.com/jonbarkert135-cpu/hrhrhtrhry/pull/85) исправляет зависимости и Caddy;
+его изменения не включены в этот docs-only PR. Исторические результаты выше сохранены.
+Этап 00 до зелёного CI и squash merge **не завершён**. Новые пользовательские сценарии здесь
+не реализуются; этап 01 не начинать вместо завершения этого review/merge.
