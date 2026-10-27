@@ -67,6 +67,17 @@ describe('blob store', () => {
     await roundTrip(store);
   });
 
+  it('only treats missing OPFS objects as successfully removed', async () => {
+    const missing = new DOMException('Missing', 'NotFoundError');
+    const denied = new DOMException('Denied', 'NotAllowedError');
+    const getDirectory = vi.fn().mockRejectedValueOnce(missing).mockRejectedValueOnce(denied);
+    const store = createBlobStore({
+      navigator: { storage: { getDirectory } } as unknown as Navigator,
+    });
+    await expect(store.remove('dataset', 'file')).resolves.toBeUndefined();
+    await expect(store.remove('dataset', 'file')).rejects.toBe(denied);
+  });
+
   it('falls back to IndexedDB with a warning', async () => {
     const onFallback = vi.fn();
     const store = createBlobStore({ navigator: {} as Navigator, onFallback });

@@ -66,8 +66,9 @@ function opfsStore(nav: Navigator): BlobStore {
       try {
         const dir = await root(boardId, false);
         await dir.removeEntry(fileId);
-      } catch {
-        // Removing a blob that is already gone is success, not an error.
+      } catch (error) {
+        // Missing files are idempotent; permission and I/O failures must keep retention retryable.
+        if (!(error instanceof DOMException) || error.name !== 'NotFoundError') throw error;
       }
     },
   };
