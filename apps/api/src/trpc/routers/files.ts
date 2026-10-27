@@ -1,3 +1,5 @@
+import type { Context } from '../context.ts';
+import { assertDatasetFileAccess } from '../../datasets/files.ts';
 /**
  * `files` router — presign → direct-to-S3 upload → complete → sniff (09_BACKEND.md §3.5, §7).
  *
@@ -9,6 +11,7 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { prisma } from '@nexus/db';
 import {
+  Sha256,
   PRESIGN_TTL_SECONDS,
   SNIFF_WINDOW_BYTES,
   fileObjectKey,
@@ -72,11 +75,15 @@ async function assertProjectInOrg(projectId: string, orgId: string): Promise<voi
 }
 
 /** A file is only reachable through the caller's own org, never by id alone. */
-async function loadFile(fileId: string, orgId: string) {
-  const file = await prisma.file.findFirst({ where: { id: fileId, orgId, deletedAt: null } });
+async function loadFile(fileId: string, ctx: Context, write = false) {
+  const file = await prisma.file.findFirst({
+    where: { id: fileId, orgId: ctx.org?.id ?? '', deletedAt: null },
+  });
   if (!file) {
     throw new TRPCError({ code: 'NOT_FOUND', message: 'That file no longer exists.' });
   }
+  if (file.datasetCollectionId)
+    await assertDatasetFileAccess(file.datasetCollectionId, file.projectId, ctx, write);
   return file;
 }
 
@@ -90,6 +97,7 @@ export const filesRouter = router({
       z.object({
         projectId: Id,
         boardId: Id.optional(),
+        collectionId: Id.optional(),
         filename: z.string().min(1).max(255),
         declaredMime: z.string().max(255).default('application/octet-stream'),
         bytes: z.number().int().min(1).max(2_147_483_648),
@@ -98,7 +106,14 @@ export const filesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       await assertProjectInOrg(input.projectId, ctx.org.id);
+      if (input.collectionId)
+        await assertDatasetFileAccess(input.collectionId, input.projectId, ctx, true);
 
+      if (input.collectionId && input.bytes > 100 * 1024 * 1024)
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Dataset evidence is limited to 100 MiB',
+        });
       const rejection = validateUpload(input);
       if (rejection !== null) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: rejection.message });
@@ -106,7 +121,14 @@ export const filesRouter = router({
 
       if (input.sha256 !== undefined) {
         const existing = await prisma.file.findFirst({
-          where: { orgId: ctx.org.id, sha256: input.sha256, state: 'ready', deletedAt: null },
+          where: {
+            orgId: ctx.org.id,
+            projectId: input.projectId,
+            datasetCollectionId: input.collectionId ?? null,
+            sha256: input.sha256,
+            state: 'ready',
+            deletedAt: null,
+          },
         });
         if (existing) {
           return { mode: 'existing' as const, fileId: existing.id, file: toDto(existing) };
@@ -126,6 +148,7 @@ export const filesRouter = router({
           orgId: ctx.org.id,
           projectId: input.projectId,
           boardId: input.boardId ?? null,
+          datasetCollectionId: input.collectionId ?? null,
           filename: input.filename,
           mime: input.declaredMime,
           kind: kindForMime(input.declaredMime),
@@ -157,7 +180,7 @@ export const filesRouter = router({
   complete: orgProcedure('editor')
     .input(z.object({ fileId: Id, sha256: z.string().refine(isSha256Hex).optional() }))
     .mutation(async ({ ctx, input }) => {
-      const file = await loadFile(input.fileId, ctx.org.id);
+      const file = await loadFile(input.fileId, ctx, true);
       if (file.state === 'ready') return toDto(file);
 
       const storage = getStorage();
@@ -194,6 +217,39 @@ export const filesRouter = router({
         );
       }
 
+      let verifiedHash: string | null = null;
+      if (file.datasetCollectionId) {
+        const hash = new Sha256();
+        for (let offset = 0; offset < Number(file.bytes); offset += 8 * 1024 * 1024) {
+          const length = Math.min(8 * 1024 * 1024, Number(file.bytes) - offset);
+          const bytes = await storage.readHead(file.storageKey, length, offset);
+          if (bytes.byteLength !== length)
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'Evidence object changed during verification',
+            });
+          hash.update(bytes);
+        }
+        verifiedHash = hash.hex();
+        if (
+          (input.sha256 && input.sha256 !== verifiedHash) ||
+          (file.sha256 && file.sha256 !== verifiedHash)
+        ) {
+          await storage.remove(file.storageKey);
+          await prisma.file.update({
+            where: { id: file.id },
+            data: {
+              state: 'failed',
+              failureCode: 'FILE_HASH_MISMATCH',
+              failureMessage: 'Evidence checksum does not match its bytes',
+            },
+          });
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Evidence checksum does not match its bytes',
+          });
+        }
+      }
       const head = await storage.readHead(file.storageKey, SNIFF_WINDOW_BYTES);
       const verdict = verifySniffedType({ head, filename: file.filename });
       if (!verdict.ok) {
@@ -206,7 +262,7 @@ export const filesRouter = router({
           state: 'ready',
           mime: verdict.mime,
           kind: verdict.kind,
-          sha256: input.sha256 ?? file.sha256,
+          sha256: verifiedHash ?? input.sha256 ?? file.sha256,
           failureCode: null,
           failureMessage: null,
         },
@@ -229,7 +285,7 @@ export const filesRouter = router({
 
   get: orgProcedure('viewer')
     .input(z.object({ fileId: Id }))
-    .query(async ({ ctx, input }) => toDto(await loadFile(input.fileId, ctx.org.id))),
+    .query(async ({ ctx, input }) => toDto(await loadFile(input.fileId, ctx))),
 
   list: orgProcedure('viewer')
     .input(
@@ -241,7 +297,7 @@ export const filesRouter = router({
     .query(async ({ ctx, input }) => {
       await assertProjectInOrg(input.projectId, ctx.org.id);
       const files = await prisma.file.findMany({
-        where: { projectId: input.projectId, deletedAt: null },
+        where: { projectId: input.projectId, datasetCollectionId: null, deletedAt: null },
         orderBy: { createdAt: 'desc' },
         take: input.limit,
       });
@@ -257,7 +313,7 @@ export const filesRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const file = await loadFile(input.fileId, ctx.org.id);
+      const file = await loadFile(input.fileId, ctx);
       if (file.state !== 'ready') {
         throw new TRPCError({
           code: 'PRECONDITION_FAILED',
@@ -276,7 +332,9 @@ export const filesRouter = router({
           message: 'That preview has not been generated for this file.',
         });
       }
-      const inline = file.kind === 'image' || file.kind === 'pdf' || input.variant !== 'original';
+      const inline =
+        !file.datasetCollectionId &&
+        (file.kind === 'image' || file.kind === 'pdf' || input.variant !== 'original');
       return {
         url: getStorage().presignGet(key, PRESIGN_TTL_SECONDS, {
           filename: file.filename,
@@ -292,7 +350,17 @@ export const filesRouter = router({
   delete: orgProcedure('editor')
     .input(z.object({ fileId: Id }))
     .mutation(async ({ ctx, input }) => {
-      const file = await loadFile(input.fileId, ctx.org.id);
+      const file = await loadFile(input.fileId, ctx, true);
+      if (
+        file.datasetCollectionId &&
+        (await prisma.dataEntry.findFirst({
+          where: { fileId: file.id, kind: 'evidence', deletedAt: null },
+        }))
+      )
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'Remove the live evidence reference before deleting its file',
+        });
       await prisma.file.update({ where: { id: file.id }, data: { deletedAt: new Date() } });
       await audit(
         {

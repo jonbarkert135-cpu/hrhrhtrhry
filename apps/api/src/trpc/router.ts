@@ -1,3 +1,5 @@
+import { datasetsRouter } from './routers/datasets.ts';
+import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { router } from './trpc.ts';
 import { authRouter } from './routers/auth.ts';
 import { projectRouter } from './routers/project.ts';
@@ -18,6 +20,7 @@ import { credentialsRouter } from './routers/credentials.ts';
 import { aiSettingsRouter } from './routers/aiSettings.ts';
 
 export const appRouter = router({
+  datasets: datasetsRouter,
   auth: authRouter,
   project: projectRouter,
   board: boardRouter,
@@ -40,3 +43,6 @@ export const appRouter = router({
 
 /** Consumed by `apps/web` as a type-only import — the client never imports the runtime router. */
 export type AppRouter = typeof appRouter;
+
+export type DatasetInputs = inferRouterInputs<AppRouter>['datasets'];
+export type DatasetOutputs = inferRouterOutputs<AppRouter>['datasets'];

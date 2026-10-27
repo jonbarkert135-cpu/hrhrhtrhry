@@ -89,7 +89,14 @@ describe('files.presign', () => {
     expect(result).toMatchObject({ mode: 'existing', fileId: FILE_ID });
     expect(prismaMock.file.create).not.toHaveBeenCalled();
     expect(prismaMock.file.findFirst).toHaveBeenCalledWith({
-      where: { orgId: ORG_ID, sha256, state: 'ready', deletedAt: null },
+      where: {
+        orgId: ORG_ID,
+        projectId: PROJECT_ID,
+        datasetCollectionId: null,
+        sha256,
+        state: 'ready',
+        deletedAt: null,
+      },
     });
   });
 
@@ -208,7 +215,7 @@ describe('files.get / list / download / delete', () => {
     const result = await caller(ctx({ role: 'viewer' })).files.list({ projectId: PROJECT_ID });
     expect(result).toHaveLength(1);
     expect(prismaMock.file.findMany).toHaveBeenCalledWith({
-      where: { projectId: PROJECT_ID, deletedAt: null },
+      where: { projectId: PROJECT_ID, datasetCollectionId: null, deletedAt: null },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });

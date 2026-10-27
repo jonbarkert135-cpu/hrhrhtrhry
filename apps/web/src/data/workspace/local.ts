@@ -1,3 +1,4 @@
+import { openDatasetDatabase, writeWorkspaceRow } from '../datasets/storage.ts';
 /**
  * The local workspace repository: projects and boards live in IndexedDB on this device.
  *
@@ -27,8 +28,6 @@ import { boardStoreName } from '../persistence.ts';
 import { WorkspaceError, type WorkspaceBoard, type WorkspaceProject } from './types.ts';
 import type { ListBoardsOptions, ListProjectsOptions, WorkspaceRepository } from './types.ts';
 
-const DB_NAME = 'raven-workspace';
-const DB_VERSION = 1;
 const PROJECTS = 'projects';
 const BOARDS = 'boards';
 
@@ -44,21 +43,7 @@ interface BoardRow extends WorkspaceBoard {
 }
 
 function open(factory: IDBFactory): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = factory.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(PROJECTS)) {
-        db.createObjectStore(PROJECTS, { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains(BOARDS)) {
-        db.createObjectStore(BOARDS, { keyPath: 'id' }).createIndex('projectId', 'projectId');
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () =>
-      reject(request.error ?? new Error('This browser would not open its local database.'));
-  });
+  return openDatasetDatabase(factory);
 }
 
 /** Maps a storage exception to copy the user can act on (P3 §8: quota, private browsing). */
@@ -164,7 +149,13 @@ export function createLocalWorkspaceRepository(
     run<T | undefined>(store, 'readonly', (s) => s.get(id) as IDBRequest<T | undefined>);
 
   const putRow = async <T>(store: string, row: T): Promise<void> => {
-    await run(store, 'readwrite', (s) => s.put(row));
+    if (!factory) throw new WorkspaceError('IndexedDB is required for workspace writes');
+    const db = await open(factory);
+    try {
+      await writeWorkspaceRow(db, store as 'projects' | 'boards', row as ProjectRow | BoardRow);
+    } finally {
+      db.close();
+    }
   };
 
   const byCreatedAt = <T extends { createdAt: string }>(rows: T[]): T[] =>

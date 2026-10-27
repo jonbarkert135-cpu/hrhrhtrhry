@@ -85,6 +85,9 @@ model Membership {
   org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  datasets           DataCollection[] @relation("DatasetOwner")
+  datasetMemberships DataEntry[]      @relation("DatasetMember")
+
   @@unique([orgId, userId])
   @@index([userId])
   @@map("memberships")
@@ -151,6 +154,9 @@ model Project {
   runs     IntegrationRun[]
   aiChunks AiChunk[]
 
+  datasets DataCollection[]
+
+  @@unique([id, orgId])
   @@unique([orgId, key])
   @@index([orgId, archivedAt])
   @@index([orgId, deletedAt, name])
@@ -192,6 +198,10 @@ model Board {
   comments  Comment[]
   presence  PresenceLogEntry[]
 
+  datasets     DataCollection[]
+  datasetLinks DataEntry[]
+
+  @@unique([id, orgId, projectId])
   @@index([projectId, deletedAt])
   @@index([projectId, archivedAt, lastOpenedAt(sort: Desc)])
   @@index([orgId, lastEditedAt(sort: Desc)])
@@ -368,11 +378,16 @@ model File {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  org                 Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  project             Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  datasetCollectionId String?         @map("dataset_collection_id")
+  datasetCollection   DataCollection? @relation(fields: [datasetCollectionId, orgId, projectId], references: [id, orgId, projectId], onDelete: Restrict, onUpdate: Restrict)
+  datasetEvidence     DataEntry[]
 
+  @@unique([id, orgId, projectId])
   @@index([projectId, deletedAt, createdAt(sort: Desc)])
   @@index([orgId, sha256, state])
+  @@index([datasetCollectionId])
   @@map("files")
 }
 
@@ -696,4 +711,98 @@ model IntegrationCredential {
   @@unique([orgId, integrationId, label])
   @@index([orgId, integrationId])
   @@map("integration_credentials")
+}
+
+/// Dataset metadata is independent of board CRDTs. Payload is the versioned domain JSON envelope.
+model DataCollection {
+  id         String      @id
+  orgId      String      @map("org_id")
+  projectId  String      @map("project_id")
+  boardId    String?     @map("board_id")
+  ownerId    String      @map("owner_id")
+  revision   Int
+  payload    Json
+  deletedAt  DateTime?   @map("deleted_at")
+  purgeAfter DateTime?   @map("purge_after")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  project    Project     @relation(fields: [projectId, orgId], references: [id, orgId], onDelete: Restrict, onUpdate: Restrict)
+  board      Board?      @relation(fields: [boardId, orgId, projectId], references: [id, orgId, projectId], onDelete: Restrict, onUpdate: Restrict)
+  owner      Membership  @relation("DatasetOwner", fields: [orgId, ownerId], references: [orgId, userId], onDelete: Restrict, onUpdate: Restrict)
+  entries    DataEntry[]
+  files      File[]
+
+  @@unique([id, orgId, projectId])
+  @@index([orgId, projectId, deletedAt, id])
+  @@index([deletedAt, purgeAfter])
+  @@map("data_collections")
+}
+
+/// One indexed row per record/fact/source, not one JSON array per collection.
+model DataEntry {
+  collectionId           String         @map("collection_id")
+  id                     String
+  orgId                  String         @map("org_id")
+  projectId              String         @map("project_id")
+  kind                   String         @db.VarChar(32)
+  revision               Int
+  payload                Json
+  versionNumber          Int?           @map("version_number")
+  memberUserId           String?        @map("member_user_id")
+  graphBoardId           String?        @map("graph_board_id")
+  fileId                 String?        @map("file_id")
+  deletedAt              DateTime?      @map("deleted_at")
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
+  collection             DataCollection @relation(fields: [collectionId, orgId, projectId], references: [id, orgId, projectId], onDelete: Restrict, onUpdate: Restrict)
+  member                 Membership?    @relation("DatasetMember", fields: [orgId, memberUserId], references: [orgId, userId], onDelete: Restrict, onUpdate: Restrict)
+  graphBoard             Board?         @relation(fields: [graphBoardId, orgId, projectId], references: [id, orgId, projectId], onDelete: Restrict, onUpdate: Restrict)
+  file                   File?          @relation(fields: [fileId, orgId, projectId], references: [id, orgId, projectId], onDelete: Restrict, onUpdate: Restrict)
+  sourceId               String?        @map("source_id")
+  source                 DataEntry?     @relation("Datasource", fields: [collectionId, sourceId], references: [collectionId, id], onDelete: Restrict, onUpdate: Restrict)
+  sourceDependents       DataEntry[]    @relation("Datasource")
+  recordId               String?        @map("record_id")
+  record                 DataEntry?     @relation("Datarecord", fields: [collectionId, recordId], references: [collectionId, id], onDelete: Restrict, onUpdate: Restrict)
+  recordDependents       DataEntry[]    @relation("Datarecord")
+  targetRecordId         String?        @map("target_record_id")
+  targetRecord           DataEntry?     @relation("DatatargetRecord", fields: [collectionId, targetRecordId], references: [collectionId, id], onDelete: Restrict, onUpdate: Restrict)
+  targetRecordDependents DataEntry[]    @relation("DatatargetRecord")
+  versionId              String?        @map("version_id")
+  version                DataEntry?     @relation("Dataversion", fields: [collectionId, versionId], references: [collectionId, id], onDelete: Restrict, onUpdate: Restrict)
+  versionDependents      DataEntry[]    @relation("Dataversion")
+  templateId             String?        @map("template_id")
+  template               DataEntry?     @relation("Datatemplate", fields: [collectionId, templateId], references: [collectionId, id], onDelete: Restrict, onUpdate: Restrict)
+  templateDependents     DataEntry[]    @relation("Datatemplate")
+  evidenceId             String?        @map("evidence_id")
+  evidence               DataEntry?     @relation("Dataevidence", fields: [collectionId, evidenceId], references: [collectionId, id], onDelete: Restrict, onUpdate: Restrict)
+  evidenceDependents     DataEntry[]    @relation("Dataevidence")
+
+  @@id([collectionId, id])
+  @@unique([collectionId, kind, versionNumber])
+  @@unique([collectionId, kind, memberUserId])
+  @@index([collectionId, kind, deletedAt, id])
+  @@index([collectionId, kind, deletedAt, recordId, id])
+  @@index([collectionId, sourceId])
+  @@index([collectionId, recordId])
+  @@index([collectionId, targetRecordId])
+  @@index([collectionId, versionId])
+  @@index([collectionId, templateId])
+  @@index([collectionId, evidenceId])
+  @@index([fileId])
+  @@map("data_entries")
+}
+
+/// Immutable, PII-minimized events; deliberately survives collection soft deletion.
+model DataAudit {
+  id           String   @id
+  collectionId String   @map("collection_id")
+  orgId        String   @map("org_id")
+  projectId    String   @map("project_id")
+  actorId      String   @map("actor_id")
+  payload      Json
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([orgId, projectId, collectionId, id])
+  @@index([collectionId])
+  @@map("data_audits")
 }

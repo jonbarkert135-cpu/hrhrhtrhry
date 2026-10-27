@@ -1,8 +1,10 @@
-import { vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 import type { Context } from '../src/trpc/context.ts';
 
 /** The slice of prisma the routers touch, all mocked. */
 export const prismaMock = {
+  dataCollection: { findFirst: vi.fn() },
+  dataEntry: { findFirst: vi.fn() },
   project: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   board: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   file: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
@@ -54,6 +56,12 @@ export const prismaMock = {
   $executeRaw: vi.fn(),
   $transaction: vi.fn(),
 };
+
+beforeEach(() => {
+  prismaMock.$transaction.mockImplementation((work: (tx: typeof prismaMock) => unknown) =>
+    Promise.resolve(work(prismaMock)),
+  );
+});
 
 export const recordAuditMock = vi.fn();
 
