@@ -1,4 +1,4 @@
-import { mapDatasetItem, type DatasetItem, type CreateCollection } from '../src/datasets/index.ts';
+import { mapDatasetItem, type DatasetItem, type CreateCollection } from '../src/index.ts';
 export const DATASET_TIME = '2026-10-26T00:00:00.000Z';
 export const collectionInput = (id = 'collection'): CreateCollection => ({
   id,

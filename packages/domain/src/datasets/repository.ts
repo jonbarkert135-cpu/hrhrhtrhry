@@ -41,6 +41,7 @@ export const DatasetChangesSchema = z
     z.discriminatedUnion('op', [
       z.object({ op: z.literal('put'), item: DatasetItemSchema }),
       z.object({ op: z.literal('delete'), id: DatasetIdSchema }),
+      z.object({ op: z.literal('restore'), id: DatasetIdSchema }),
     ]),
   )
   .min(1)
@@ -69,6 +70,7 @@ export interface DatasetRepository {
   createCollection(input: CreateCollection): Promise<DataCollection>;
   updateCollection(id: string, revision: number, patch: CollectionPatch): Promise<DataCollection>;
   deleteCollection(id: string, revision: number): Promise<DataCollection>;
+  restoreCollection(id: string, revision: number): Promise<DataCollection>;
   getItem(collectionId: string, id: string): Promise<DatasetItem>;
   listItems(
     collectionId: string,
@@ -221,11 +223,13 @@ export function prepareDatasetChanges(
       throw new DatasetError('INVALID_FORMAT', 'An item may be changed only once per transaction');
     touched.add(id);
     const old = existing.get(id);
-    if (old?.deletedAt !== null && old !== undefined)
+    if (old?.deletedAt !== null && old !== undefined && change.op !== 'restore')
       throw new DatasetError('CONFLICT', 'Deleted item IDs cannot be reused');
+    if (change.op === 'restore' && old?.deletedAt === null)
+      throw new DatasetError('CONFLICT', 'Item is not deleted');
     if (old?.kind === 'version' && old.sealedAt !== null)
       throw new DatasetError('CONFLICT', 'Sealed versions are immutable');
-    if (change.op === 'delete' && old === undefined)
+    if (change.op !== 'put' && old === undefined)
       throw new DatasetError('NOT_FOUND', 'Dataset item not found');
     if (
       change.op === 'put' &&
@@ -304,4 +308,31 @@ export function assertDatasetPurge(
       'CONFLICT',
       'Soft delete and wait for the retention deadline before purging',
     );
+}
+
+export function restoreDatasetCollection(
+  collection: DataCollection,
+  revision: number,
+  now: string,
+  auditRef: string,
+): DataCollection {
+  if (collection.revision !== revision)
+    throw new DatasetError('CONFLICT', 'Collection changed; reload before retrying');
+  if (
+    !collection.deletedAt ||
+    !collection.purgeAfter ||
+    Date.parse(now) >= Date.parse(collection.purgeAfter)
+  )
+    throw new DatasetError(
+      'CONFLICT',
+      'Collection can only be restored before its retention deadline',
+    );
+  return DataCollectionSchema.parse({
+    ...collection,
+    revision: revision + 1,
+    updatedAt: now,
+    auditRef,
+    deletedAt: null,
+    purgeAfter: null,
+  });
 }

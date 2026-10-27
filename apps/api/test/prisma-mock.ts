@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 import type { Context } from '../src/trpc/context.ts';
 
 /** The slice of prisma the routers touch, all mocked. */
@@ -56,6 +56,12 @@ export const prismaMock = {
   $executeRaw: vi.fn(),
   $transaction: vi.fn(),
 };
+
+beforeEach(() => {
+  prismaMock.$transaction.mockImplementation((work: (tx: typeof prismaMock) => unknown) =>
+    Promise.resolve(work(prismaMock)),
+  );
+});
 
 export const recordAuditMock = vi.fn();
 

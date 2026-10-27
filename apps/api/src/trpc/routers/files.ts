@@ -332,7 +332,9 @@ export const filesRouter = router({
           message: 'That preview has not been generated for this file.',
         });
       }
-      const inline = !file.datasetCollectionId && (file.kind === 'image' || file.kind === 'pdf' || input.variant !== 'original');
+      const inline =
+        !file.datasetCollectionId &&
+        (file.kind === 'image' || file.kind === 'pdf' || input.variant !== 'original');
       return {
         url: getStorage().presignGet(key, PRESIGN_TTL_SECONDS, {
           filename: file.filename,

@@ -11,7 +11,7 @@ import {
   importDatasetPage,
   mapDatasetItem,
   pageLimit,
-} from '../src/datasets/index.ts';
+} from '../src/index.ts';
 import { collectionInput, datasetFixture, datasetItem, DATASET_TIME as at } from './datasets.ts';
 const scope = { workspaceId: 'local', orgId: null, projectId: 'project', boardId: null };
 const collection = () => createDatasetCollection(collectionInput(), scope, 'owner', at, 'audit');

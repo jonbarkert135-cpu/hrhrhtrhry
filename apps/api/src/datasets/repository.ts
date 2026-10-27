@@ -8,6 +8,7 @@ import {
   DatasetChangesSchema,
   createDatasetCollection,
   reviseCollection,
+  restoreDatasetCollection,
   prepareDatasetChanges,
   datasetReferences,
   orderDatasetItems,
@@ -107,7 +108,7 @@ export function createServerDatasetRepository(options: {
       where: { id, ...whereScope, ...(includeDeleted ? { deletedAt: { not: null } } : {}) },
     });
     if (!row) throw new DatasetError('NOT_FOUND', 'Collection not found');
-    const data = DataCollectionSchema.parse(row.payload);
+    const data = parseDatasetInput(() => DataCollectionSchema.parse(row.payload));
     if (data.ownerId === actorId || role === 'owner' || role === 'admin') return data;
     if (manage)
       throw new DatasetError(
@@ -117,7 +118,7 @@ export function createServerDatasetRepository(options: {
     const member = await tx.dataEntry.findFirst({
       where: { collectionId: id, kind: 'member', memberUserId: actorId, deletedAt: null },
     });
-    const memberRole = member ? mapDatasetItem(member.payload) : null;
+    const memberRole = member ? parseDatasetInput(() => mapDatasetItem(member.payload)) : null;
     if (memberRole?.kind === 'member') {
       if (write && memberRole.role !== 'editor')
         throw new DatasetError('FORBIDDEN', 'Collection is read-only');
@@ -199,7 +200,9 @@ export function createServerDatasetRepository(options: {
           take: limit + 1,
         });
         return {
-          items: rows.slice(0, limit).map((r) => DataCollectionSchema.parse(r.payload)),
+          items: rows
+            .slice(0, limit)
+            .map((r) => parseDatasetInput(() => DataCollectionSchema.parse(r.payload))),
           nextCursor: rows.length > limit ? rows[limit - 1]!.id : null,
         };
       }),
@@ -242,12 +245,25 @@ export function createServerDatasetRepository(options: {
         await event(tx, next, 'collection.deleted', old.auditRef);
         return next;
       }),
+    restoreCollection: (id, revision) =>
+      run(true, async (tx, role) => {
+        const old = await collection(tx, id, role, true, true, true);
+        const next = restoreDatasetCollection(old, revision, now(), nextId());
+        const result = await tx.dataCollection.updateMany({
+          where: { id, orgId, projectId, revision, deletedAt: { not: null } },
+          data: { revision: next.revision, payload: json(next), deletedAt: null, purgeAfter: null },
+        });
+        if (result.count !== 1)
+          throw new DatasetError('CONFLICT', 'Collection changed; reload before retrying');
+        await event(tx, next, 'collection.restored', old.auditRef);
+        return next;
+      }),
     getItem: (collectionId, id) =>
       run(false, async (tx, role) => {
         await collection(tx, collectionId, role, false);
         const row = await tx.dataEntry.findFirst({ where: { collectionId, id, deletedAt: null } });
         if (!row) throw new DatasetError('NOT_FOUND', 'Dataset item not found');
-        return mapDatasetItem(row.payload);
+        return parseDatasetInput(() => mapDatasetItem(row.payload));
       }),
     listItems: (collectionId, kind, input = {}) =>
       run(false, async (tx, role) => {
@@ -265,7 +281,9 @@ export function createServerDatasetRepository(options: {
           take: limit + 1,
         });
         return {
-          items: rows.slice(0, limit).map((r) => mapDatasetItem(r.payload)),
+          items: rows
+            .slice(0, limit)
+            .map((r) => parseDatasetInput(() => mapDatasetItem(r.payload))),
           nextCursor: rows.length > limit ? rows[limit - 1]!.id : null,
         };
       }),
@@ -290,9 +308,26 @@ export function createServerDatasetRepository(options: {
           ),
         );
         const rows = await tx.dataEntry.findMany({ where: { collectionId, id: { in: ids } } });
-        const existing = new Map(rows.map((r) => [r.id, mapDatasetItem(r.payload)]));
+        const existing = new Map(
+          rows.map((r) => [r.id, parseDatasetInput(() => mapDatasetItem(r.payload))]),
+        );
+        const needed = Array.from(
+          new Set(
+            [...existing.values()]
+              .flatMap((item) => datasetReferences(item).map((ref) => ref.id))
+              .filter((id) => !existing.has(id)),
+          ),
+        );
+        if (needed.length)
+          for (const row of await tx.dataEntry.findMany({
+            where: { collectionId, id: { in: needed } },
+          }))
+            existing.set(
+              row.id,
+              parseDatasetInput(() => mapDatasetItem(row.payload)),
+            );
         // Deleting a membership requires the same management rights as granting it.
-        if (changes.some((c) => c.op === 'delete' && existing.get(c.id)?.kind === 'member'))
+        if (changes.some((c) => c.op !== 'put' && existing.get(c.id)?.kind === 'member'))
           await collection(tx, collectionId, role, true, true);
         const items = prepareDatasetChanges(
           old,
@@ -323,7 +358,8 @@ export function createServerDatasetRepository(options: {
             if (
               refs.length > 200 ||
               refs.some((r) => {
-                const live = replacements.get(r.id) ?? mapDatasetItem(r.payload);
+                const live =
+                  replacements.get(r.id) ?? parseDatasetInput(() => mapDatasetItem(r.payload));
                 return (
                   live.deletedAt === null &&
                   datasetReferences(live).some((ref) => ref.id === item.id)

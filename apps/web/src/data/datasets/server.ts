@@ -11,6 +11,7 @@ export interface DatasetClient {
   item: (input: Inputs['item']) => Promise<Outputs['item']>;
   items: (input: Inputs['items']) => Promise<Outputs['items']>;
   commit: (input: Inputs['commit']) => Promise<Outputs['commit']>;
+  restore: (input: Inputs['restore']) => Promise<Outputs['restore']>;
   purge: (input: Inputs['purge']) => Promise<Outputs['purge']>;
   audit: (input: Inputs['audit']) => Promise<Outputs['audit']>;
 }
@@ -26,6 +27,8 @@ export function createRemoteDatasetRepository(
       client.update({ ...scope, collectionId, revision, patch }),
     deleteCollection: (collectionId, revision) =>
       client.remove({ ...scope, collectionId, revision }),
+    restoreCollection: (collectionId, revision) =>
+      client.restore({ ...scope, collectionId, revision }),
     purgeCollection: (collectionId, revision) => client.purge({ ...scope, collectionId, revision }),
     getItem: (collectionId, id) => client.item({ ...scope, collectionId, id }),
     listItems: (collectionId, kind, page) =>

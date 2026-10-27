@@ -11,6 +11,7 @@ import {
   DatasetIdSchema,
   createDatasetCollection,
   reviseCollection,
+  restoreDatasetCollection,
   prepareDatasetChanges,
   datasetReferences,
   mapDatasetItem,
@@ -103,14 +104,18 @@ export function createLocalDatasetRepository(options: {
     `dataset-${new Sha256().update(new TextEncoder().encode(collectionKey(collectionId))).hex()}`;
   const verifiedFiles = new Map<string, DatasetEvidence>();
   let connection: Promise<IDBDatabase> | undefined;
-  const open = (): Promise<IDBDatabase> => (connection ??= openDatasetDatabase(factory));
+  const open = (): Promise<IDBDatabase> =>
+    (connection ??= openDatasetDatabase(factory).catch((error: unknown) => {
+      connection = undefined;
+      throw error;
+    }));
   const transaction = async <T>(
     mode: IDBTransactionMode,
     run: (tx: IDBTransaction) => Promise<T>,
   ): Promise<T> => {
     try {
       const tx = (await open()).transaction(
-        ['collections', 'items', 'audit', 'projects', 'boards'],
+        ['collections', 'items', 'audit', 'projects', 'boards', 'blobStaging'],
         mode,
       );
       const done = new Promise<void>((resolve, reject) => {
@@ -160,7 +165,7 @@ export function createLocalDatasetRepository(options: {
       | undefined;
     if (!row || (!includeDeleted && row.data.deletedAt !== null))
       throw new DatasetError('NOT_FOUND', 'Collection not found');
-    return DataCollectionSchema.parse(row.data);
+    return parseDatasetInput(() => DataCollectionSchema.parse(row.data));
   };
   const saveCollection = async (tx: IDBTransaction, data: DataCollection): Promise<void> => {
     await request(
@@ -222,7 +227,9 @@ export function createLocalDatasetRepository(options: {
           limit + 1,
         );
         return {
-          items: rows.slice(0, limit).map((r) => DataCollectionSchema.parse(r.data)),
+          items: rows
+            .slice(0, limit)
+            .map((r) => parseDatasetInput(() => DataCollectionSchema.parse(r.data))),
           nextCursor: rows.length > limit ? rows[limit - 1]!.id : null,
         };
       }),
@@ -267,6 +274,14 @@ export function createLocalDatasetRepository(options: {
         await audit(tx, updated, 'collection.deleted', old.auditRef);
         return updated;
       }),
+    restoreCollection: (id, revision) =>
+      transaction('readwrite', async (tx) => {
+        const old = await getCollection(tx, id, true);
+        const next = restoreDatasetCollection(old, revision, now(), nextId());
+        await saveCollection(tx, next);
+        await audit(tx, next, 'collection.restored', old.auditRef);
+        return next;
+      }),
     getItem: (collectionId, id) =>
       transaction('readonly', async (tx) => {
         await getCollection(tx, collectionId);
@@ -275,7 +290,7 @@ export function createLocalDatasetRepository(options: {
           | undefined;
         if (!row || row.data.deletedAt !== null)
           throw new DatasetError('NOT_FOUND', 'Dataset item not found');
-        return mapDatasetItem(row.data);
+        return parseDatasetInput(() => mapDatasetItem(row.data));
       }),
     listItems: (collectionId, kind, input = {}) =>
       transaction('readonly', async (tx) => {
@@ -294,7 +309,7 @@ export function createLocalDatasetRepository(options: {
           limit + 1,
         );
         return {
-          items: rows.slice(0, limit).map((r) => mapDatasetItem(r.data)),
+          items: rows.slice(0, limit).map((r) => parseDatasetInput(() => mapDatasetItem(r.data))),
           nextCursor: rows.length > limit ? rows[limit - 1]!.id : null,
         };
       }),
@@ -313,6 +328,14 @@ export function createLocalDatasetRepository(options: {
           const row = (await request(store.get(itemKey(collectionId, id)))) as ItemRow | undefined;
           if (row) existing.set(id, row.data);
         }
+        for (const item of [...existing.values()])
+          for (const ref of datasetReferences(item)) {
+            if (existing.has(ref.id)) continue;
+            const row = (await request(store.get(itemKey(collectionId, ref.id)))) as
+              | ItemRow
+              | undefined;
+            if (row) existing.set(ref.id, row.data);
+          }
         const updated = reviseCollection(collection, revision, now(), nextId(), {});
         const items = prepareDatasetChanges(
           collection,
@@ -325,10 +348,13 @@ export function createLocalDatasetRepository(options: {
         const replacements = new Map(items.map((item) => [item.id, item]));
         for (const item of items) {
           if (item.kind === 'entity_link' && item.deletedAt === null) {
-          const board = await request(tx.objectStore('boards').get(item.boardId)) as { projectId: string; deletedAt: string | null } | undefined;
-          if (!board || board.projectId !== scope.projectId || board.deletedAt !== null) throw new DatasetError('INVALID_FORMAT', 'Entity link board is outside this project');
-        }
-        if (item.kind === 'member')
+            const board = (await request(tx.objectStore('boards').get(item.boardId))) as
+              | { projectId: string; deletedAt: string | null }
+              | undefined;
+            if (!board || board.projectId !== scope.projectId || board.deletedAt !== null)
+              throw new DatasetError('INVALID_FORMAT', 'Entity link board is outside this project');
+          }
+          if (item.kind === 'member')
             throw new DatasetError(
               'INVALID_FORMAT',
               'Local collections do not have organization memberships',
@@ -370,7 +396,11 @@ export function createLocalDatasetRepository(options: {
               );
           }
         }
-        for (const item of items) await request(store.put(rowFor(item)));
+        for (const item of items) {
+          await request(store.put(rowFor(item)));
+          if (item.kind === 'evidence')
+            await request(tx.objectStore('blobStaging').delete(itemKey(collectionId, item.fileId)));
+        }
         await saveCollection(tx, updated);
         await audit(
           tx,
@@ -401,8 +431,36 @@ export function createLocalDatasetRepository(options: {
           if (!rows.length) break;
           for (const row of rows)
             if (row.data.kind === 'evidence')
-              await blobs.remove(blobNamespace(id), row.data.fileId);
+              try {
+                await blobs.remove(blobNamespace(id), row.data.fileId);
+              } catch (error) {
+                throw storageError(error);
+              }
           cursor = rows[rows.length - 1]!.id;
+        }
+      }
+      // The staging ledger survives a crash between OPFS writes and metadata commit.
+      for (;;) {
+        const pending = await transaction('readonly', (tx) =>
+          scan<{ key: string; id: string }>(
+            tx.objectStore('blobStaging').index('collection'),
+            IDBKeyRange.bound([collectionKey(id), ''], [collectionKey(id), '\uffff']),
+            200,
+          ),
+        );
+        if (!pending.length) break;
+        for (const file of pending) {
+          try {
+            await blobs.remove(blobNamespace(id), file.id);
+          } catch {
+            throw new DatasetError(
+              'STORAGE_UNAVAILABLE',
+              'Evidence cleanup is incomplete; retry purge',
+            );
+          }
+          await transaction('readwrite', async (tx) => {
+            await request(tx.objectStore('blobStaging').delete(file.key));
+          });
         }
       }
       await transaction('readwrite', async (tx) => {
@@ -471,13 +529,30 @@ export function createLocalDatasetRepository(options: {
         throw new DatasetError('INVALID_FORMAT', 'Evidence checksum does not match');
       const fileId = nextId();
       const item = { ...evidence, fileId };
-      await blobs.put(blobNamespace(collectionId), fileId, blob);
-      verifiedFiles.set(fileId, item);
+      await transaction('readwrite', async (tx) => {
+        await getCollection(tx, collectionId);
+        await request(
+          tx.objectStore('blobStaging').add({
+            key: itemKey(collectionId, fileId),
+            collection: collectionKey(collectionId),
+            id: fileId,
+          }),
+        );
+      });
       try {
+        await blobs.put(blobNamespace(collectionId), fileId, blob);
+        verifiedFiles.set(fileId, item);
         return await repo.commit(collectionId, revision, [{ op: 'put', item }]);
       } catch (error) {
-        await blobs.remove(blobNamespace(collectionId), fileId);
-        throw error;
+        try {
+          await blobs.remove(blobNamespace(collectionId), fileId);
+          await transaction('readwrite', async (tx) => {
+            await request(tx.objectStore('blobStaging').delete(itemKey(collectionId, fileId)));
+          });
+        } catch {
+          /* Keep the staging ledger so retention purge can recover the orphan. */
+        }
+        throw storageError(error);
       } finally {
         verifiedFiles.delete(fileId);
       }
@@ -490,8 +565,9 @@ export function createLocalDatasetRepository(options: {
       return blob;
     },
     async close() {
-      if (connection) (await connection).close();
+      const previous = connection;
       connection = undefined;
+      if (previous) await previous.then((db) => db.close()).catch(() => undefined);
     },
   };
 }

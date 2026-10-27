@@ -92,6 +92,75 @@ afterAll(async () => {
 });
 
 describe('Prisma dataset repository and API', () => {
+  it('restores records and a collection without losing provenance or allowing expired/unauthorized restore', async () => {
+    const c = await create();
+    await repo().commit(c.id, 1, puts(c.id));
+    await repo().commit(c.id, 2, [
+      { op: 'delete', id: 'assertion' },
+      { op: 'delete', id: 'record' },
+    ]);
+    await repo().commit(c.id, 3, [
+      { op: 'restore', id: 'record' },
+      { op: 'restore', id: 'assertion' },
+    ]);
+    expect((await repo().getItem(c.id, 'assertion')).sourceId).toBe('source');
+    await expect(repo().commit(c.id, 4, [{ op: 'restore', id: 'record' }])).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+    await repo().deleteCollection(c.id, 4);
+    await expect(repo(editorId).restoreCollection(c.id, 5)).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
+    const restored = await caller().api.restore({ projectId, collectionId: c.id, revision: 5 });
+    expect(restored.deletedAt).toBeNull();
+    expect((await repo().getCollection(c.id)).revision).toBe(6);
+    const deleted = await repo().deleteCollection(c.id, 6);
+    const maintenance = createServerDatasetRepository({
+      db: prisma,
+      actorId,
+      orgId,
+      projectId,
+      now: () => deleted.purgeAfter!,
+    });
+    await expect(maintenance.restoreCollection(c.id, 7)).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+  });
+
+  it('serializes project deletion against dataset creation with no orphaned collection', async () => {
+    const raceProject = newId.project();
+    await prisma.project.create({
+      data: {
+        id: raceProject,
+        orgId,
+        key: newId.project(),
+        name: 'Race project',
+        createdBy: actorId,
+      },
+    });
+    const id = `${prefix}-race`;
+    collections.push(id);
+    const context: Context = {
+      user: { id: actorId, email: 'synthetic@example.invalid', name: 'Synthetic' },
+      org: { id: orgId, slug: orgId, name: 'Synthetic' },
+      role: 'owner',
+      req_id: prefix,
+      ip: '127.0.0.1',
+      logger: { info() {}, warn() {}, error() {} },
+    };
+    const results = await Promise.allSettled([
+      repo(actorId, raceProject).createCollection(collectionInput(id)),
+      createCallerFactory(appRouter)(context).project.delete({
+        projectId: raceProject,
+        confirmName: 'Race project',
+      }),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const parent = await prisma.project.findUniqueOrThrow({ where: { id: raceProject } });
+    if (parent.deletedAt) expect(await prisma.dataCollection.count({ where: { id } })).toBe(0);
+    else expect(await prisma.dataCollection.count({ where: { id } })).toBe(1);
+  });
+
   it('enforces retention, retries object cleanup, purges bytes before metadata and never reuses collection IDs', async () => {
     const c = await create();
     await repo().commit(c.id, 1, puts(c.id));

@@ -6,10 +6,20 @@ const apiURL = process.env.E2E_API_URL ?? 'http://localhost:3001';
 test('server collections persist through the authenticated API without becoming canvas nodes', async ({
   page,
 }) => {
-  const boardURL = await openNewBoard(page);
-  const match = /\/p\/([^/]+)\/b\//.exec(boardURL);
-  expect(match).not.toBeNull();
-  const projectId = match![1]!;
+  await openNewBoard(page);
+  const projectId: string = await page.evaluate(async (base) => {
+    const input = encodeURIComponent(
+      JSON.stringify({ json: { limit: 50, includeArchived: false } }),
+    );
+    const response = await fetch(`${base}/trpc/project.list?input=${input}`, {
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error(`Project metadata failed with ${response.status}`);
+    const projects = (await response.json()).result.data.json;
+    if (projects.length !== 1)
+      throw new Error('Expected the one project created by this fresh account');
+    return projects[0].id;
+  }, apiURL);
   const collection = collectionInput(`browser-${Date.now()}`);
   const items = datasetFixture(collection.id);
   const result = await page.evaluate(

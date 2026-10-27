@@ -18,6 +18,10 @@ export function openDatasetDatabase(factory: IDBFactory | undefined): Promise<ID
       collections.createIndex('scope', ['scope', 'active', 'id']);
       collections.createIndex('project', 'data.scope.projectId');
       collections.createIndex('board', 'data.scope.boardId');
+      db.createObjectStore('blobStaging', { keyPath: 'key' }).createIndex('collection', [
+        'collection',
+        'id',
+      ]);
       const items = db.createObjectStore('items', { keyPath: 'key' });
       items.createIndex('page', ['collection', 'kind', 'active', 'id']);
       items.createIndex('record', ['collection', 'kind', 'active', 'recordId', 'id']);

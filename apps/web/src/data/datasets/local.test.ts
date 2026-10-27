@@ -65,6 +65,35 @@ afterEach(async () => {
 const put = (items: DatasetItem[]) => items.map((item) => ({ op: 'put' as const, item }));
 
 describe('offline dataset repository', () => {
+  it('restores soft-deleted records atomically and collections only within retention', async () => {
+    const repo = create();
+    await repo.createCollection(collectionInput());
+    await repo.commit('collection', 1, put(datasetFixture()));
+    await repo.commit('collection', 2, [
+      { op: 'delete', id: 'assertion' },
+      { op: 'delete', id: 'record' },
+    ]);
+    await expect(repo.getItem('collection', 'record')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(repo.commit('collection', 3, put([datasetFixture()[2]!]))).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+    const restored = await repo.commit('collection', 3, [
+      { op: 'restore', id: 'record' },
+      { op: 'restore', id: 'assertion' },
+    ]);
+    expect(restored.items.map((i) => i.deletedAt)).toEqual([null, null]);
+    expect((await repo.getItem('collection', 'record')).createdAt).toBe(DATASET_TIME);
+    await repo.deleteCollection('collection', 4);
+    const active = await repo.restoreCollection('collection', 5);
+    expect(active.deletedAt).toBeNull();
+    expect(active.purgeAfter).toBeNull();
+    expect((await repo.getAudit('collection', active.auditRef)).action).toBe('collection.restored');
+    const deleted = await repo.deleteCollection('collection', 6);
+    await expect(
+      create({ now: () => deleted.purgeAfter! }).restoreCollection('collection', 7),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+
   it('upgrades legacy workspace metadata without changing projects or boards', async () => {
     const legacy = new IDBFactory();
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -297,6 +326,53 @@ describe('offline dataset repository', () => {
       repo.commit('collection', 3, put([{ ...evidence, id: 'forged', fileId: 'another' }])),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
+  it('recovers staged evidence after a failed device write and a repository restart', async () => {
+    let offline = true;
+    const blobs: BlobStore = {
+      backend: 'indexeddb',
+      put: (ns, id, blob) => {
+        blobData.set(`${ns}/${id}`, blob);
+        return Promise.reject(new Error('Device write interrupted'));
+      },
+      get: (ns, id) => Promise.resolve(blobData.get(`${ns}/${id}`) ?? null),
+      remove: (ns, id) => {
+        if (offline) return Promise.reject(new Error('Device offline'));
+        blobData.delete(`${ns}/${id}`);
+        return Promise.resolve();
+      },
+    };
+    const repo = create({ blobs });
+    await repo.createCollection(collectionInput());
+    await repo.commit('collection', 1, put(datasetFixture()));
+    const bytes = new TextEncoder().encode('Fictional evidence');
+    const blob = new Blob([bytes], { type: 'text/plain' });
+    const item = datasetItem({
+      id: 'proof',
+      kind: 'evidence',
+      sourceId: 'source',
+      fileId: 'pending',
+      sha256: new Sha256().update(bytes).hex(),
+      bytes: blob.size,
+      filename: 'fictional.txt',
+      mime: 'text/plain',
+    });
+    if (item.kind !== 'evidence') throw new Error('Expected evidence fixture');
+    await expect(repo.attachEvidence('collection', 2, item, blob)).rejects.toMatchObject({
+      code: 'STORAGE_UNAVAILABLE',
+    });
+    expect((await repo.listItems('collection', 'evidence')).items).toEqual([]);
+    expect(blobData.size).toBe(1);
+    const deleted = await repo.deleteCollection('collection', 2);
+    await repo.close();
+    const reopened = create({ blobs, now: () => deleted.purgeAfter! });
+    await expect(reopened.purgeCollection('collection', 3)).rejects.toMatchObject({
+      code: 'STORAGE_UNAVAILABLE',
+    });
+    offline = false;
+    await reopened.purgeCollection('collection', 3);
+    expect(blobData.size).toBe(0);
+  });
+
   it('reads one indexed page out of 100k records without getAll or loading any graph', async () => {
     const repo = create();
     await repo.createCollection(collectionInput());

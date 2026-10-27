@@ -87,6 +87,11 @@ export const datasetsRouter = router({
     .mutation(({ ctx, input }) =>
       call(ctx, input, (repo) => repo.deleteCollection(input.collectionId, input.revision)),
     ),
+  restore: orgProcedure('editor')
+    .input(entry.extend({ revision: z.number().int().positive() }))
+    .mutation(({ ctx, input }) =>
+      call(ctx, input, (repo) => repo.restoreCollection(input.collectionId, input.revision)),
+    ),
   purge: orgProcedure('editor')
     .input(entry.extend({ revision: z.number().int().positive() }))
     .mutation(({ ctx, input }) =>

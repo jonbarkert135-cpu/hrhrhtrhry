@@ -1,4 +1,4 @@
-import { assertDatasetParentCanChange } from '../../datasets/parents.ts';
+import { mutateDatasetParent } from '../../datasets/parents.ts';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { prisma } from '@nexus/db';
@@ -147,12 +147,13 @@ export const boardRouter = router({
     .input(z.object({ boardId: Id, projectId: Id }))
     .mutation(async ({ ctx, input }) => {
       await requireBoard(input.boardId, ctx.org.id);
-      await assertDatasetParentCanChange('board', input.boardId, ctx.org.id);
       await assertProjectInOrg(input.projectId, ctx.org.id);
-      const board = await prisma.board.update({
-        where: { id: input.boardId },
-        data: { projectId: input.projectId },
-      });
+      const board = await mutateDatasetParent('board', input.boardId, ctx.org.id, (tx) =>
+        tx.board.update({
+          where: { id: input.boardId },
+          data: { projectId: input.projectId },
+        }),
+      );
       await audit(
         {
           action: 'board.moved',
@@ -218,12 +219,13 @@ export const boardRouter = router({
     .input(z.object({ boardId: Id }))
     .mutation(async ({ ctx, input }) => {
       const board = await requireBoard(input.boardId, ctx.org.id);
-      await assertDatasetParentCanChange('board', input.boardId, ctx.org.id);
       // Soft delete: the row is purged by the maintenance job after the undo window.
-      await prisma.board.update({
-        where: { id: board.id },
-        data: { deletedAt: systemClock.now() },
-      });
+      await mutateDatasetParent('board', input.boardId, ctx.org.id, (tx) =>
+        tx.board.update({
+          where: { id: board.id },
+          data: { deletedAt: systemClock.now() },
+        }),
+      );
       await audit(
         {
           action: 'board.deleted',

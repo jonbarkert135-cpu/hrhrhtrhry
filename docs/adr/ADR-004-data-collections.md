@@ -5,7 +5,8 @@ Status: accepted for the Data Intelligence model (stage 01).
 A collection is a project-owned dataset, not a graph or a board template. The domain contract is
 `packages/domain/src/datasets/`; `DatasetRepository` has paged reads, collection CRUD, atomic
 `commit` batches, immutable audit references and an explicit retention purge. All writes require
-an expected collection revision. An item ID cannot change kind or resurrect a tombstone.
+an expected collection revision. An item ID cannot change kind; ordinary upserts cannot resurrect a tombstone.
+Soft-deleted items can be restored in an atomic batch; collection restore is limited to its retention window.
 Collection IDs remain reserved by the immutable audit ledger even after purge.
 
 ## Storage and trust boundaries
@@ -62,8 +63,8 @@ board formats, Y.Doc schema version 1 and person nodes keep their existing codec
 ## Retention and recovery
 
 Soft deletion hides a collection immediately and records `purgeAfter` using its retention policy.
-After that deadline, an owner/admin may explicitly purge. Local purge removes evidence bytes
-before deleting metadata. Server purge first tombstones its exclusively owned files, removes
+After that deadline, an owner/admin may explicitly purge. A persistent local staging ledger tracks
+object writes across crashes. Local purge removes evidence bytes before deleting metadata. Server purge first tombstones its exclusively owned files, removes
 objects and variants, then deletes item/file/collection rows in a transaction. Failed object
 removal keeps metadata available to a retry; S3 404 is idempotent, other failed DELETE responses
 are errors. Audit events contain identifiers/revisions, not a copy of personal field values, and
