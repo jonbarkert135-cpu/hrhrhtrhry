@@ -11,18 +11,18 @@ import {
   type DatasetItemKind,
 } from './model.ts';
 
+export type DatasetErrorCode =
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'INVALID_FORMAT'
+  | 'CONFLICT'
+  | 'STORAGE_UNAVAILABLE';
 export class DatasetError extends Error {
-  constructor(
-    readonly code:
-      | 'FORBIDDEN'
-      | 'NOT_FOUND'
-      | 'INVALID_FORMAT'
-      | 'CONFLICT'
-      | 'STORAGE_UNAVAILABLE',
-    message: string,
-  ) {
+  readonly code: DatasetErrorCode;
+  constructor(code: DatasetErrorCode, message: string) {
     super(message);
     this.name = 'DatasetError';
+    this.code = code;
   }
 }
 export const CreateCollectionSchema = DataCollectionSchema.pick({
