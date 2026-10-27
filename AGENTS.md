@@ -7,6 +7,7 @@ Read this file first, then only what it points at. Do **not** read the tree to o
 1. This file.
 2. `docs/DEVELOPER_HANDOFF.md` — repo map, where behaviour lives, commands.
    Data Intelligence continuation: [docs/DATA_INTELLIGENCE_PLAN.md](docs/DATA_INTELLIGENCE_PLAN.md).
+   Dataset storage and API contract: [ADR-004](docs/adr/ADR-004-data-collections.md).
 3. `RAVEN-SPEC/20_ROADMAP.md` — phases, what is done, what is next (the tracker).
    `RAVEN-SPEC/25_IMPLEMENTATION_STATUS.md` — per-requirement audit of the owner's roadmap doc;
    read it instead of the roadmap doc itself, and update the touched rows in the same PR.

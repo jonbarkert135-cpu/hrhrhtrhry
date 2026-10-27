@@ -120,7 +120,7 @@ export interface S3Client {
   /** Byte size of the stored object, or `null` when it is not there. */
   headBytes: (key: string) => Promise<number | null>;
   /** First `length` bytes of the object, for magic-byte sniffing. */
-  readHead: (key: string, length: number) => Promise<Uint8Array>;
+  readHead: (key: string, length: number, offset?: number) => Promise<Uint8Array>;
   remove: (key: string) => Promise<void>;
 }
 
@@ -151,17 +151,21 @@ export function createS3Client(config: S3Config, fetcher: Fetcher): S3Client {
       return Number.isFinite(length) ? length : null;
     },
 
-    readHead: async (key, length) => {
+    readHead: async (key, length, offset = 0) => {
       const response = await fetcher(url({ method: 'GET', key, expiresInSeconds: 60 }), {
         method: 'GET',
-        headers: { range: `bytes=0-${Math.max(0, length - 1)}` },
+        headers: { range: `bytes=${offset}-${offset + Math.max(0, length - 1)}` },
       });
       if (!response.ok) return new Uint8Array();
       return new Uint8Array(await response.arrayBuffer());
     },
 
     remove: async (key) => {
-      await fetcher(url({ method: 'DELETE', key, expiresInSeconds: 60 }), { method: 'DELETE' });
+      const response = await fetcher(url({ method: 'DELETE', key, expiresInSeconds: 60 }), {
+        method: 'DELETE',
+      });
+      if (!response.ok && response.status !== 404)
+        throw new Error('Object storage refused file deletion');
     },
   };
 }

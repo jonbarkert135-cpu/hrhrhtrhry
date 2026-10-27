@@ -1,0 +1,116 @@
+{
+  "format": "raven.dataset.page.v1",
+  "collection": {
+    "format": "raven.dataset.v1",
+    "id": "synthetic-collection",
+    "scope": {
+      "workspaceId": "synthetic-device",
+      "orgId": null,
+      "projectId": "synthetic-project",
+      "boardId": null
+    },
+    "ownerId": "synthetic-owner",
+    "name": "Fictional research",
+    "description": "Synthetic data only",
+    "visibility": "private",
+    "label": "restricted",
+    "retentionDays": 30,
+    "revision": 1,
+    "auditRef": "synthetic-audit",
+    "createdAt": "2026-10-26T00:00:00.000Z",
+    "updatedAt": "2026-10-26T00:00:00.000Z",
+    "deletedAt": null,
+    "purgeAfter": null
+  },
+  "items": [
+    {
+      "id": "version",
+      "collectionId": "synthetic-collection",
+      "revision": 1,
+      "auditRef": "initial",
+      "createdAt": "2026-10-26T00:00:00.000Z",
+      "updatedAt": "2026-10-26T00:00:00.000Z",
+      "deletedAt": null,
+      "kind": "version",
+      "number": 1,
+      "description": "Initial",
+      "sealedAt": null,
+      "futureExtension": {
+        "preserved": true
+      }
+    },
+    {
+      "id": "source",
+      "collectionId": "synthetic-collection",
+      "revision": 1,
+      "auditRef": "initial",
+      "createdAt": "2026-10-26T00:00:00.000Z",
+      "updatedAt": "2026-10-26T00:00:00.000Z",
+      "deletedAt": null,
+      "kind": "source",
+      "name": "Manual fictional note",
+      "origin": "manual_note",
+      "author": {
+        "id": "fictional-author",
+        "name": "Example Analyst"
+      },
+      "observedAt": "2026-10-26T00:00:00.000Z",
+      "importedAt": "2026-10-26T00:00:00.000Z",
+      "url": "https://example.invalid/source",
+      "fileHash": null,
+      "license": "Synthetic fixture",
+      "lawfulBasis": "Fictional test data, no real person",
+      "restriction": "Do not send externally",
+      "externalUseAllowed": false,
+      "futureExtension": {
+        "preserved": true
+      }
+    },
+    {
+      "id": "record",
+      "collectionId": "synthetic-collection",
+      "revision": 1,
+      "auditRef": "initial",
+      "createdAt": "2026-10-26T00:00:00.000Z",
+      "updatedAt": "2026-10-26T00:00:00.000Z",
+      "deletedAt": null,
+      "kind": "record",
+      "versionId": "version",
+      "templateId": null,
+      "title": "Example Person (fictional)",
+      "rowIndex": 0,
+      "futureExtension": {
+        "preserved": true
+      }
+    },
+    {
+      "id": "assertion",
+      "collectionId": "synthetic-collection",
+      "revision": 1,
+      "auditRef": "initial",
+      "createdAt": "2026-10-26T00:00:00.000Z",
+      "updatedAt": "2026-10-26T00:00:00.000Z",
+      "deletedAt": null,
+      "kind": "assertion",
+      "recordId": "record",
+      "sourceId": "source",
+      "evidenceId": null,
+      "fieldId": "name",
+      "value": "Example Person",
+      "normalizedValue": "Example Person",
+      "assertionType": "claimed",
+      "observedAt": "2026-10-26T00:00:00.000Z",
+      "rowIndex": 0,
+      "assessment": {
+        "confidence": null,
+        "assessedBy": null,
+        "assessedAt": null,
+        "rationale": "Not an identity determination"
+      },
+      "futureExtension": {
+        "preserved": true
+      }
+    }
+  ],
+  "nextCursor": null
+}

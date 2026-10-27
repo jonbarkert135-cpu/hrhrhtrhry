@@ -1,3 +1,4 @@
+import { assertDatasetParentCanChange } from '../../datasets/parents.ts';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { prisma } from '@nexus/db';
@@ -237,6 +238,7 @@ export const projectRouter = router({
           message: 'The name you typed does not match the project name.',
         });
       }
+      await assertDatasetParentCanChange('project', project.id, ctx.org.id);
       // Soft delete: the row is purged by the maintenance job after the undo window.
       await prisma.project.update({
         where: { id: project.id },

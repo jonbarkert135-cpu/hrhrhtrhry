@@ -903,3 +903,16 @@ sync/worker/runner; бэкап-скрипт и restore-drill (это самая 
 памяти процесса — два runner'а держат по своему бюджету на один провайдер; бенчмарка оркестрации на
 10/100/1000 параллельных ранов нет (её просит §74). Дальше по бэклогу: §67/§68 (fallback + manual
 mode), §69–§71 (единый UX и deep view).
+
+## Data Intelligence 01 — collections model (2026-10-27)
+
+Домен: `packages/domain/src/datasets/` — коллекции, версии, источники, записи, утверждения,
+evidence, ссылки/отношения, формы и saved views. Репозитории: IndexedDB/OPFS в
+`apps/web/src/data/datasets/`, Prisma/Postgres в `apps/api/src/datasets/`, API `datasets.*`.
+Документ решения и ограничения: [ADR-004](../docs/adr/ADR-004-data-collections.md).
+Миграция `0011_data_collections` additive; workspace IndexedDB v2 сохраняет metadata v1,
+старые Y.Doc/board exports/person codecs не меняются. Чтение коллекций не загружает граф.
+Проверки: domain/local contract, реальный PostgreSQL, 100k-row cursor read, file ACL/checksum,
+retention purge и browser E2E `e2e/datasets/repository.spec.ts`.
+Формы UI, Data Hub, табличные импортёры и запись projections в граф — следующие этапы;
+модель не объявляет их реализованными.

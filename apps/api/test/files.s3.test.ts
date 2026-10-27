@@ -139,6 +139,22 @@ describe('createS3Client', () => {
     expect(fetcher.mock.calls[0]?.[1]?.headers).toEqual({ range: 'bytes=0-63' });
   });
 
+  it('reads successive checksum chunks at their actual byte offsets', async () => {
+    const fetcher = vi.fn<Fetcher>().mockResolvedValue(response());
+    await createS3Client(config, fetcher).readHead('evidence', 16, 32);
+    expect(fetcher.mock.calls[0]?.[1]?.headers).toEqual({ range: 'bytes=32-47' });
+  });
+
+  it('keeps purge retryable when object storage refuses deletion', async () => {
+    const fetcher = vi
+      .fn<Fetcher>()
+      .mockResolvedValueOnce(response({ ok: false, status: 503 }))
+      .mockResolvedValueOnce(response({ ok: false, status: 404 }));
+    const client = createS3Client(config, fetcher);
+    await expect(client.remove('evidence')).rejects.toThrow(/refused/);
+    await expect(client.remove('already-removed')).resolves.toBeUndefined();
+  });
+
   it('returns nothing readable when the ranged GET fails', async () => {
     const fetcher = vi.fn<Fetcher>().mockResolvedValue(response({ ok: false, status: 403 }));
     expect(await createS3Client(config, fetcher).readHead('k', 64)).toEqual(new Uint8Array());
