@@ -93,3 +93,34 @@ describe('ProjectPage', () => {
     expect(await screen.findByText('That project no longer exists')).toBeInTheDocument();
   });
 });
+
+it('filters real board metadata, sorts by name and clears an empty result', async () => {
+  repository.listBoards = vi.fn(() =>
+    Promise.resolve([
+      fakeBoard({ id: 'b1', projectId: 'p1', title: 'Source review' }),
+      fakeBoard({ id: 'b2', projectId: 'p1', title: 'Evidence notes' }),
+      fakeBoard({
+        id: 'b3',
+        projectId: 'p1',
+        title: 'Archived template',
+        archivedAt: '2026-01-01T00:00:00.000Z',
+        isTemplate: true,
+      }),
+    ]),
+  );
+  renderPage();
+  await screen.findByRole('link', { name: 'Source review' });
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Find a board' }), 'evidence');
+  expect(screen.queryByRole('link', { name: 'Source review' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Evidence notes' })).toBeInTheDocument();
+  await userEvent.type(screen.getByRole('searchbox'), ' missing');
+  await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Sort boards' }), 'name');
+  expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(
+    expect.arrayContaining([expect.stringContaining('Evidence notes')]),
+  );
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Show archived' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Templates only' }));
+  expect(screen.getByRole('link', { name: 'Archived template' })).toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Evidence notes' })).not.toBeInTheDocument();
+});

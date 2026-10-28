@@ -59,6 +59,11 @@ export function useShortcut(combo: string, handler: () => void): void {
   }, [combo, handler]);
 }
 
+const OPEN_PALETTE = 'raven:open-command-palette';
+export function openCommandPalette(): void {
+  window.dispatchEvent(new Event(OPEN_PALETTE));
+}
+
 type Mode = 'commands' | 'tags' | 'nodes' | 'workspaceNodes' | 'switch' | 'help';
 
 export function modeOf(query: string): { mode: Mode; term: string } {
@@ -125,6 +130,15 @@ export function CommandPalette() {
     setActiveIndex(0);
     setOpen(true);
   };
+  useEffect(() => {
+    const openFromChrome = () => {
+      setQuery('');
+      setActiveIndex(0);
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_PALETTE, openFromChrome);
+    return () => window.removeEventListener(OPEN_PALETTE, openFromChrome);
+  }, []);
   useShortcut('mod+k', () => openWith(''));
   useShortcut('mod+p', () => openWith('/'));
 

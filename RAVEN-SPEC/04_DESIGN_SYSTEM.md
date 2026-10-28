@@ -2044,3 +2044,23 @@ reduced-motion block.
    users who enlarge the default browser font will not see UI text scale (browser _zoom_ still
    works). Mitigated by the in-app font-scale setting (§6.2). This is a deliberate accessibility
    trade-off and must be re-reviewed in the P16 a11y audit.
+
+## Workspace and motion refinement (2026-10-28)
+
+The existing Raven palette, self-hosted Manrope/Inter Tight type and glass chrome remain binding.
+Project navigation now separates the project list, settings and an explicit local/server scope.
+The project page uses a clear heading, native board search/sort, readable metadata and neutral
+board covers instead of arbitrary per-board hues. Covers are symbols, not generated snapshots.
+The first-run canvas explains its next action without intercepting engine pointer events.
+
+Motion roles are shared in `packages/ui/src/tokens/motion.css`: feedback 120 ms, panel/route
+entry 240 ms and overlay exit 180 ms. Only transforms/opacity animate for page and overlay
+transitions. Button press feedback and card hover use the same role tokens; no idle animation
+or scroll interception is introduced. Radix owns dialog/menu presence and focus restoration.
+Reduced-motion disables page/overlay animation and directional card movement.
+
+Review used the owner's supplied UI/UX Pro Max, Redesign and frontend React/accessibility/testing
+skills. Their generic marketing layouts and alternative palettes do not override this product spec.
+Acceptance journeys are in `e2e/workspace/design.spec.ts`: actual board creation/persistence,
+filtering/sorting, command navigation, mobile overflow, keyboard focus and reduced motion, plus
+an axe sweep. The same journeys support local and authenticated server deployments.

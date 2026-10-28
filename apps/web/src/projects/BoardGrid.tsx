@@ -1,3 +1,4 @@
+import { MagnifyingGlassIcon, DashboardIcon } from '@radix-ui/react-icons';
 import { useMemo, useState } from 'react';
 import { BUILTIN_TEMPLATES } from '@nexus/domain';
 import { Banner, Button, Dialog, Field } from '@nexus/ui';
@@ -22,24 +23,43 @@ export function BoardGrid({
   boards: readonly WorkspaceBoard[];
   role: WorkspaceRole;
 }) {
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState('recent');
   const [showArchived, setShowArchived] = useState(false);
   const [showTemplatesOnly, setShowTemplatesOnly] = useState(false);
   const [visible, setVisible] = useState(PAGE_SIZE);
 
   const filtered = useMemo(() => {
-    const sorted = sortBoards(boards);
+    const sorted =
+      sort === 'name'
+        ? [...boards].sort((a, b) => a.title.localeCompare(b.title))
+        : sortBoards(boards);
     return sorted.filter((board) => {
+      if (!board.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) return false;
       if (!showArchived && board.archivedAt !== null) return false;
       if (showTemplatesOnly && !board.isTemplate) return false;
       return true;
     });
-  }, [boards, showArchived, showTemplatesOnly]);
+  }, [boards, query, sort, showArchived, showTemplatesOnly]);
 
   const page = filtered.slice(0, visible);
 
   return (
     <div className="nx-stack">
-      <div className="nx-toolbar" role="group" aria-label="Board filters">
+      <div className="nx-board-filters" role="group" aria-label="Board filters">
+        <label className="nx-board-search">
+          <MagnifyingGlassIcon aria-hidden="true" />
+          <span className="nx-visually-hidden">Find a board</span>
+          <input
+            type="search"
+            placeholder="Find a board…"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setVisible(PAGE_SIZE);
+            }}
+          />
+        </label>
         <label className="nx-checkbox">
           <input
             type="checkbox"
@@ -56,10 +76,34 @@ export function BoardGrid({
           />
           Templates only
         </label>
+        <label className="nx-board-sort">
+          <span className="nx-visually-hidden">Sort boards</span>
+          <select value={sort} onChange={(event) => setSort(event.target.value)}>
+            <option value="recent">Recently opened</option>
+            <option value="name">Name, A to Z</option>
+          </select>
+        </label>
       </div>
-
+      <p className="nx-result-summary" role="status">
+        {String(filtered.length)} {filtered.length === 1 ? 'board' : 'boards'} shown
+      </p>
       {filtered.length === 0 ? (
-        <p className="nx-muted">No boards match these filters.</p>
+        <div className="nx-filter-empty">
+          <DashboardIcon aria-hidden="true" />
+          <h3>No boards match these filters.</h3>
+          <p>Try a different name or clear your filters.</p>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setQuery('');
+              setShowArchived(false);
+              setShowTemplatesOnly(false);
+              setVisible(PAGE_SIZE);
+            }}
+          >
+            Clear filters
+          </Button>
+        </div>
       ) : (
         <>
           <ul className="nx-card-grid">
@@ -116,6 +160,7 @@ export function NewBoardDialog({
             Cancel
           </Button>
           <Button
+            variant="primary"
             loading={submitting}
             disabled={submitting || title.trim() === ''}
             onClick={() => onSubmit({ title: title.trim(), ...(templateId ? { templateId } : {}) })}
@@ -139,7 +184,7 @@ export function NewBoardDialog({
           disabled={submitting}
           onChange={(event) => setTitle(event.target.value)}
         />
-        <fieldset className="nx-stack">
+        <fieldset className="nx-template-options">
           <legend>Start from</legend>
           <label className="nx-radio">
             <input
@@ -148,7 +193,8 @@ export function NewBoardDialog({
               checked={templateId === undefined}
               onChange={() => setTemplateId(undefined)}
             />
-            Blank board
+            <strong>Blank board</strong>
+            <span className="nx-template-description">An open canvas for your investigation.</span>
           </label>
           {BUILTIN_TEMPLATES.map((template) => (
             <label className="nx-radio" key={template.id}>
@@ -158,7 +204,8 @@ export function NewBoardDialog({
                 checked={templateId === template.id}
                 onChange={() => setTemplateId(template.id)}
               />
-              {template.title} — <span className="nx-muted">{template.description}</span>
+              <strong>{template.title}</strong>
+              <span className="nx-template-description">{template.description}</span>
             </label>
           ))}
         </fieldset>

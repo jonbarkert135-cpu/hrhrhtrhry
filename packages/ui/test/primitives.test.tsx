@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Button } from '../src/primitives/Button';
 import { Field } from '../src/primitives/Field';
 import { Skeleton } from '../src/primitives/Skeleton';
@@ -48,7 +48,7 @@ describe('Skeleton', () => {
 });
 
 describe('Dialog', () => {
-  it('opens and closes', () => {
+  it('opens, closes and restores the external opening control', async () => {
     function Harness() {
       const [open, setOpen] = useState(false);
       return (
@@ -67,10 +67,13 @@ describe('Dialog', () => {
     }
     render(<Harness />);
     expect(screen.queryByRole('dialog')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    const opener = screen.getByRole('button', { name: 'Open' });
+    opener.focus();
+    fireEvent.click(opener);
     expect(screen.getByRole('dialog', { name: 'Delete board' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(opener));
   });
 });
 
