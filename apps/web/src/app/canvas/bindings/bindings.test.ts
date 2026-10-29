@@ -23,7 +23,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import type * as Y from 'yjs';
 
-import { applyIntent, createNoteNode, type IntentContext } from './applyIntents';
+import { applyIntent, createNoteNode, createPersonNode, type IntentContext } from './applyIntents';
 import { MAIN_LAYER_ID, patchesFromChange, sceneFromDoc } from './sceneFromDoc';
 
 const NOW = '2026-08-17T12:00:00.000Z';
@@ -476,4 +476,20 @@ describe('edge views carry the routing inputs', () => {
     expect(view?.manualRoute).toBe(false);
     expect(view?.style.animated).toBe(false);
   });
+});
+
+it('creates a manual person from registry defaults as one undo step without inventing contact facts', () => {
+  const doc = createBoardDoc({ boardId: 'manual-person', now: NOW });
+  const ctx = context(doc);
+  const id = createPersonNode(ctx, { x: 400, y: 240 });
+  const person = getNode(doc, id)!;
+  expect(person.type).toBe('person');
+  expect(person.provenance.kind).toBe('manual');
+  expect(person.data['emails']).toEqual([]);
+  expect(person.data['displayName']).toBe('');
+  expect(person.w).toBe(280);
+  ctx.history?.undo();
+  expect(listNodes(doc)).toHaveLength(0);
+  ctx.history?.redo();
+  expect(getNode(doc, id)?.id).toBe(id);
 });

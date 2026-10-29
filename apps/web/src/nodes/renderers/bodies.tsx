@@ -164,15 +164,32 @@ function PersonBody({ node, detailed }: NodeBodyProps) {
   const displayName = text(node.data['displayName']);
   const usernames = list(node.data['usernames']);
   const emails = list(node.data['emails']);
+  const organization = text(node.data['organization']);
+  const location = text(node.data['location']);
   return (
     <div className="nx-card-body nx-card-person">
       <span className="nx-avatar" aria-hidden="true">
         {initialsOf(displayName === '' ? node.title : displayName)}
       </span>
       <div className="nx-card-person-detail">
-        <span className="nx-card-text" data-clamp="1">
-          {displayName === '' ? 'Unnamed person' : displayName}
-        </span>
+        {displayName !== node.title ? (
+          <span className="nx-card-person-name" data-clamp="1">
+            {displayName === '' ? 'Unnamed person' : displayName}
+          </span>
+        ) : null}
+        {organization || location ? (
+          <span className="nx-card-meta" data-clamp="1">
+            {[organization, location].filter(Boolean).join(' · ')}
+          </span>
+        ) : null}
+        {emails.length > 0 ? (
+          <span className="nx-card-contact" data-clamp="1">
+            {emails[0]}
+          </span>
+        ) : null}
+        {emails.length === 0 && usernames.length === 0 && !organization && !location ? (
+          <span className="nx-card-placeholder">Contact details not added</span>
+        ) : null}
         <span className="nx-chip-row">
           {usernames.slice(0, detailed ? 6 : 2).map((username) => (
             <span key={username} className="nx-chip">
@@ -180,7 +197,6 @@ function PersonBody({ node, detailed }: NodeBodyProps) {
             </span>
           ))}
         </span>
-        {detailed && emails.length > 0 ? <span className="nx-card-meta">{emails[0]}</span> : null}
       </div>
     </div>
   );

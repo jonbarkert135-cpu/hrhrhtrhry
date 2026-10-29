@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   ChevronRightIcon,
   DashboardIcon,
@@ -251,7 +251,7 @@ export function Shell({
     <div className="nx-app">
       <SkipToContent targetId="nx-main">Skip to content</SkipToContent>
       <header className="nx-topbar">
-        <span className="nx-brand" data-testid="brand-lockup">
+        <Link className="nx-brand" data-testid="brand-lockup" to="/welcome" aria-label="Raven home">
           <img
             className="nx-brand-mark"
             src={`${import.meta.env.BASE_URL}brand/raven-mark-64.png`}
@@ -264,7 +264,7 @@ export function Shell({
           <span className="nx-brand-word">
             Raven <span className="nx-brand-word-soft">OSINT</span>
           </span>
-        </span>
+        </Link>
         <span className="nx-workspace-name">{orgName}</span>
         <ChevronRightIcon className="nx-breadcrumb-divider" aria-hidden="true" />
         <h1 className="nx-topbar-title">{title}</h1>

@@ -13,6 +13,7 @@ import { capabilities } from '../mode/appMode';
 import { Shell } from './shell/Shell';
 import { ShellContainer } from './shell/ShellContainer';
 
+const WelcomePage = lazy(() => import('./welcome/WelcomePage'));
 const LoginPage = lazy(() => import('./auth/LoginPage'));
 const SignupPage = lazy(() => import('./auth/SignupPage'));
 const ProjectPage = lazy(() => import('./pages/ProjectPage'));
@@ -86,6 +87,7 @@ export function AppRoutes() {
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
+          <Route path="/welcome" element={<WelcomePage />} />
           {capabilities.auth ? (
             <>
               <Route

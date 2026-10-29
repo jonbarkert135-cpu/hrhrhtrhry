@@ -269,3 +269,30 @@ describe('NodeCard in-place editing', () => {
     expect(screen.queryByRole('button', { name: 'Edit text' })).not.toBeInTheDocument();
   });
 });
+
+it('shows compact contact context and the actual source without asserting identity verification', () => {
+  const person = node(
+    'person',
+    {
+      displayName: 'Mira Example',
+      emails: ['mira@example.test'],
+      organization: 'Example archive',
+      location: 'Example city',
+    },
+    { title: 'Mira Example' },
+  );
+  render(
+    <NodeCard
+      node={{
+        ...person,
+        provenance: { ...person.provenance, kind: 'import', source: 'Authorized sample document' },
+      }}
+      now={NOW}
+    />,
+  );
+  expect(screen.getAllByText('Mira Example')).toHaveLength(1);
+  expect(screen.getByText('mira@example.test')).toBeInTheDocument();
+  expect(screen.getByText('Example archive · Example city')).toBeInTheDocument();
+  expect(screen.getByText('Authorized sample document')).toBeInTheDocument();
+  expect(screen.queryByText(/verified identity/i)).not.toBeInTheDocument();
+});

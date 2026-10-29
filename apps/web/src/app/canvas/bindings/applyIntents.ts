@@ -357,9 +357,24 @@ export function createNoteNode(
   title = 'New note',
   options: { separate?: boolean } = {},
 ): string {
+  return createManualNode(context, at, 'note', title, options);
+}
+
+/** Explicit user creation reuses registry defaults, placement, provenance and history. */
+export function createPersonNode(context: IntentContext, at: { x: number; y: number }): string {
+  return createManualNode(context, at, 'person', 'New person');
+}
+
+function createManualNode(
+  context: IntentContext,
+  at: { x: number; y: number },
+  type: 'note' | 'person',
+  title: string,
+  options: { separate?: boolean } = {},
+): string {
   const now = context.now();
   const makeId = context.makeId ?? ((): string => newId.board());
-  const size = builtinNodeTypes().get('note').defaults.size;
+  const size = builtinNodeTypes().get(type).defaults.size;
   // Aim at the viewport centre, then step aside if something is already there: two notes in a row
   // must never land on the same pixel (06 §1.6).
   const spot = findFreePlacement({
@@ -371,7 +386,7 @@ export function createNoteNode(
   const { node } = createNode(
     context.doc,
     {
-      type: 'note',
+      type,
       x: spot.x,
       y: spot.y,
       title,

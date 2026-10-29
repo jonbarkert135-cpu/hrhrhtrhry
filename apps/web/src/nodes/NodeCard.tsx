@@ -47,6 +47,15 @@ export interface NodeCardProps extends NodeCardActions {
 
 /** Tag chips appear from zoom ≥ 0.8, i.e. whenever the card is a DOM card at all (P4 §5.7). */
 const MAX_VISIBLE_TAGS = 4;
+const ORIGIN_LABELS = {
+  manual: 'Manual entry',
+  paste: 'Pasted content',
+  drop: 'Dropped file',
+  import: 'Imported data',
+  tool: 'Tool result',
+  ai: 'AI suggestion',
+  sync: 'Synced data',
+} satisfies Record<BoardNode['provenance']['kind'], string>;
 
 function NodeCardImpl({
   node,
@@ -89,9 +98,12 @@ function NodeCardImpl({
         <span className="nx-card-type" style={{ color: `var(${def.glyph.colorToken})` }}>
           <NodeIcon icon={def.glyph.icon} />
         </span>
-        <h2 className="nx-card-title" data-clamp="2">
-          {node.title === '' ? `Untitled ${def.label.toLowerCase()}` : node.title}
-        </h2>
+        <div className="nx-card-heading">
+          <span className="nx-card-label">{def.label}</span>
+          <h2 className="nx-card-title" data-clamp="2">
+            {node.title === '' ? `Untitled ${def.label.toLowerCase()}` : node.title}
+          </h2>
+        </div>
         {node.locked ? (
           <span className="nx-chip" data-kind="locked">
             Locked
@@ -139,6 +151,11 @@ function NodeCardImpl({
           {overflow > 0 ? <span className="nx-chip">+{String(overflow)}</span> : null}
         </div>
       ) : null}
+
+      <footer className="nx-card-origin" title={node.provenance.source ?? undefined}>
+        <NodeIcon icon="link" />
+        <span>{node.provenance.source || ORIGIN_LABELS[node.provenance.kind]}</span>
+      </footer>
 
       {/* The rail is absolutely positioned so revealing it never shifts the card layout (§6). */}
       <div className="nx-card-rail" data-testid="card-rail">

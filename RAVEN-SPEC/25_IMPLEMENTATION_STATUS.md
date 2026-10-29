@@ -1,5 +1,15 @@
 # 25 — IMPLEMENTATION STATUS (единый трекер по дорожной карте)
 
+> **Owner-directed silver revision (2026-10-29).** The current brand uses deep black surfaces
+> and a silver accent; historical Azure examples below are superseded by
+> `packages/ui/src/tokens/{color.css,tokens.ts}`. Status and entity taxonomy colors remain semantic.
+> The public, lazy `/welcome` route uses original local Raven artwork, a metallic workspace link,
+> finite entrance motion and reduced-motion support. `/` remains the existing workspace entry:
+> no registration in local mode, existing auth in server mode. Canvas cards show actual origin
+> labels; Quick Add → Person and the Add person command use registry defaults and one undo step.
+> The node store now reconnects after React StrictMode cleanup, keeping inspector edits visible.
+> These are workspace/brand improvements; collection forms and record import screens remain separate work.
+
 Источник правды: **код** в `apps/` и `packages/`, а не спеки. Проверено сквозным аудитом всех 46 разделов
 дорожной карты владельца, 2026-08-22 (ветка `p14a` = `main` + auto-layout).
 
