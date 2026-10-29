@@ -228,10 +228,12 @@ export function Shell({
   const [accountError, setAccountError] = useState(false);
   const title =
     location.pathname === '/settings'
-      ? 'Settings'
+      ? 'Workspace settings'
       : location.pathname === '/system'
-        ? 'System'
-        : (projects?.find((project) => project.id === params.projectId)?.name ?? boardTitle);
+        ? 'System overview'
+        : params.projectId !== undefined
+          ? 'Project workspace'
+          : boardTitle;
   const signOut = async () => {
     setSigningOut(true);
     setAccountError(false);

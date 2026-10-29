@@ -76,7 +76,7 @@ it('navigates from the account menu instead of rendering inactive items', async 
   await userEvent.click(screen.getByRole('button', { name: 'Account' }));
   await userEvent.click(screen.getByRole('menuitem', { name: 'Settings' }));
   expect(screen.getByLabelText('Current route')).toHaveTextContent('/settings');
-  expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Workspace settings' })).toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Account' }));
   await userEvent.click(screen.getByRole('menuitem', { name: 'System' }));
   expect(screen.getByLabelText('Current route')).toHaveTextContent('/system');

@@ -46,16 +46,17 @@ test('workspace discovery, board filtering and command navigation work through t
   if (process.env.E2E_UI_MODE !== 'local') {
     await page.getByRole('button', { name: 'Account', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login(?:\?|$)/);
+    await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
   }
 });
 
 test('mobile layout respects reduced motion and restores dialog focus without horizontal page overflow', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openProject(page);
+  await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );

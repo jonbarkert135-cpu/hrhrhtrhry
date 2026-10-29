@@ -6,6 +6,7 @@
     --nx-rail-width: calc(var(--nx-space-10) * 4 + var(--nx-space-5));
     display: grid;
     grid-template-rows: var(--nx-space-10) minmax(0, 1fr) var(--nx-space-7);
+    grid-template-columns: minmax(0, 1fr);
     height: 100dvh;
     background: var(--surface-0);
     color: var(--fg-primary);
@@ -2658,5 +2659,19 @@
     inset-block-start: var(--nx-space-4);
     inset-inline-end: var(--nx-space-4);
     max-inline-size: min(40ch, calc(100% - var(--nx-space-7)));
+  }
+}
+
+@layer components {
+  .nx-body,
+  .nx-topbar,
+  .nx-rail {
+    min-width: 0;
+  }
+  .nx-page-head > div {
+    min-width: 0;
+  }
+  .nx-page-title {
+    overflow-wrap: anywhere;
   }
 }
