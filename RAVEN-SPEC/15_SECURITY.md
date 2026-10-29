@@ -1517,3 +1517,13 @@ A phase cannot pass the gate (`00_MASTER.md` §8 item 5) without its row above.
 - **Audit** (§7): `integration.run.requested`, `integration.run.cancelled`,
   `integration.consent.accepted`, `integration.consent.revoked`, `integration.proposal.applied`,
   `integration.proposal.discarded`, `apiToken.created`, `apiToken.revoked`.
+
+## Dependency audit maintenance (2026-10-28)
+
+Registry audit reported new Better-Auth advisories, including
+[GHSA-965c-763c-88jm](https://github.com/advisories/GHSA-965c-763c-88jm) and
+[GHSA-r4xp-prcw-77qf](https://github.com/advisories/GHSA-r4xp-prcw-77qf).
+Both API and web now require Better-Auth 1.7.14 (patched floor for these advisories: 1.7.7).
+Library telemetry is explicitly disabled in the server auth configuration. Existing CSRF,
+cookie and signup-rate policies are retained; signup/session/sign-out browser journeys and
+`pnpm audit --audit-level high --prod` are the acceptance checks. No audit gate is relaxed.

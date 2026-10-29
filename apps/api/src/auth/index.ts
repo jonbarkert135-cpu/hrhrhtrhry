@@ -25,6 +25,7 @@ export function createAuth(env: ServerEnv) {
 
   return betterAuth({
     appName: 'raven',
+    telemetry: { enabled: false },
     secret: env.AUTH_SECRET,
     baseURL: env.PUBLIC_APP_URL,
     basePath: '/auth',

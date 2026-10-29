@@ -37,7 +37,7 @@
     "@tiptap/suggestion": "2.27.2",
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
-    "better-auth": "^1.1.4",
+    "better-auth": "^1.7.14",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",
