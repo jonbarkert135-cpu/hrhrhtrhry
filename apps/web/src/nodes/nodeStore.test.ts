@@ -89,6 +89,22 @@ describe('createNodeStore', () => {
     expect(second).not.toHaveBeenCalled();
   });
 
+  it('resubscribes after StrictMode cleanup and sees subsequent edits', () => {
+    const { doc, ids } = boardWith(1);
+    const id = ids[0] ?? '';
+    const store = createNodeStore(doc);
+    const first = store.subscribe(id, vi.fn());
+    first();
+    store.destroy();
+    const listener = vi.fn();
+    const second = store.subscribe(id, listener);
+    updateNodeData(doc, id, { severity: 'finding' }, { now: T0 });
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(store.getSnapshot(id)?.data['severity']).toBe('finding');
+    second();
+    store.destroy();
+  });
+
   it('reports a deleted node as undefined', () => {
     const { doc, ids } = boardWith(1);
     const store = createNodeStore(doc);

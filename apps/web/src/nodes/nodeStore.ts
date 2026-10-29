@@ -30,7 +30,7 @@ export function createNodeStore(doc: Y.Doc): NodeStore {
     else snapshots.set(id, node);
   };
 
-  const stop = observeBoard(doc, (change) => {
+  const onChange: Parameters<typeof observeBoard>[1] = (change) => {
     for (const id of change.nodes.upserted) {
       refresh(id);
       const set = listeners.get(id);
@@ -49,10 +49,17 @@ export function createNodeStore(doc: Y.Doc): NodeStore {
         for (const listener of idListeners) listener();
       }
     }
-  });
+  };
+  // Subscribe lazily: React StrictMode may clean up and subscribe to the same store again.
+  // A store allocated during a discarded render must not leave a document observer behind.
+  let stop: (() => void) | undefined;
+  const connect = (): void => {
+    stop ??= observeBoard(doc, onChange);
+  };
 
   return {
     subscribe(id, listener) {
+      connect();
       const set = listeners.get(id) ?? new Set<() => void>();
       set.add(listener);
       listeners.set(id, set);
@@ -62,21 +69,33 @@ export function createNodeStore(doc: Y.Doc): NodeStore {
       };
     },
     subscribeIds(listener) {
+      connect();
       idListeners.add(listener);
-      return () => idListeners.delete(listener);
+      return () => {
+        idListeners.delete(listener);
+      };
     },
     getSnapshot(id) {
       const cached = snapshots.get(id);
-      if (cached !== undefined) return cached;
+      if (stop !== undefined && cached !== undefined) return cached;
       const node = getNode(doc, id);
+      // Without an active observer, preserve referential stability while checking for edits
+      // made between subscriptions. This path is outside the subscribed card render loop.
+      if (cached !== undefined && JSON.stringify(cached) === JSON.stringify(node)) return cached;
       if (node !== undefined) snapshots.set(id, node);
+      else snapshots.delete(id);
       return node;
     },
     getIds() {
+      if (stop === undefined) {
+        const next = listNodes(doc).map((node) => node.id);
+        if (next.length !== ids.length || next.some((id, index) => id !== ids[index])) ids = next;
+      }
       return ids;
     },
     destroy() {
-      stop();
+      stop?.();
+      stop = undefined;
       listeners.clear();
       idListeners.clear();
       snapshots.clear();

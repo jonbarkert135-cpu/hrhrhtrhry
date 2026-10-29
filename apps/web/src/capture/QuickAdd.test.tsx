@@ -91,3 +91,11 @@ describe('PasteToast', () => {
     vi.useRealTimers();
   });
 });
+
+it('offers explicit manual person creation through the existing quick-add menu', () => {
+  const onPerson = vi.fn();
+  render(<QuickAdd onNote={vi.fn()} onCapture={vi.fn()} onPerson={onPerson} />);
+  fireEvent.keyDown(screen.getByTestId('quick-add'), { key: 'Enter' });
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Person' }));
+  expect(onPerson).toHaveBeenCalledTimes(1);
+});

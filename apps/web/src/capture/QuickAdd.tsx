@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 export interface QuickAddProps {
   onNote: () => void;
+  onPerson?: (() => void) | undefined;
   /** Receives a raw text payload — a URL, several URLs, or prose. */
   onCapture: (text: string) => void;
 }
@@ -30,7 +31,7 @@ export function describePayload(text: string): string {
   }
 }
 
-export function QuickAdd({ onNote, onCapture }: QuickAddProps) {
+export function QuickAdd({ onNote, onPerson, onCapture }: QuickAddProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
 
@@ -74,6 +75,7 @@ export function QuickAdd({ onNote, onCapture }: QuickAddProps) {
         }
       >
         <MenuItem onSelect={onNote}>Note (N)</MenuItem>
+        {onPerson ? <MenuItem onSelect={onPerson}>Person</MenuItem> : null}
         <MenuItem onSelect={() => setOpen(true)}>Link or text (L)</MenuItem>
       </Menu>
 

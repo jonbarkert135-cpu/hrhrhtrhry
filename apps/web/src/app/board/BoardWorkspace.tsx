@@ -35,7 +35,12 @@ import { useBoardSearchIndex } from '../../search/useBoardSearchIndex.ts';
 import { CanvasHost } from '../canvas/CanvasHost';
 import { useViewportMemory } from '../canvas/useViewportMemory.ts';
 import { VIEW_LABELS, VIEW_MODES, type ViewMode } from '../../views/projections.ts';
-import { applyIntent, connectToEmpty, createNoteNode } from '../canvas/bindings/applyIntents.ts';
+import {
+  applyIntent,
+  connectToEmpty,
+  createNoteNode,
+  createPersonNode,
+} from '../canvas/bindings/applyIntents.ts';
 import { EdgeLayer, pendingFromIntent, type PendingEdgeUi } from '../../edges/EdgeLayer.tsx';
 import { BoardInspector } from './BoardInspector.tsx';
 import { patchesFromChange, sceneFromDoc } from '../canvas/bindings/sceneFromDoc.ts';
@@ -453,31 +458,44 @@ export function BoardWorkspace() {
     return () => window.removeEventListener('keydown', onKey);
   }, [onGroup, onUngroup, openLayers, openGroups]);
 
-  const addNote = useCallback(() => {
-    if (nodeBudget(doc).blocked) {
-      setNotice('This board is full. Split the investigation into a second board.');
-      return;
-    }
-    // Drop the note in the middle of what the user is looking at, not at the world origin.
-    const viewport = engine?.camera.viewportWorld;
-    const at =
-      viewport === undefined
-        ? { x: 0, y: 0 }
-        : { x: viewport.x + viewport.w / 2, y: viewport.y + viewport.h / 2 };
-    // Select the new note and focus its title: typing must land in the field, not in the
-    // single-key board shortcuts (§36).
-    const id = createNoteNode(context, at);
-    setSelectedIds([id]);
-    setFocusTitleFor(id);
-    // `context` is rebuilt every render on purpose: it only holds the doc, history and clock.
+  const addManualNode = useCallback(
+    (create: typeof createNoteNode) => {
+      if (nodeBudget(doc).blocked) {
+        setNotice('This board is full. Split the investigation into a second board.');
+        return;
+      }
+      // Drop the note in the middle of what the user is looking at, not at the world origin.
+      const viewport = engine?.camera.viewportWorld;
+      const at =
+        viewport === undefined
+          ? { x: 0, y: 0 }
+          : { x: viewport.x + viewport.w / 2, y: viewport.y + viewport.h / 2 };
+      // Select the new note and focus its title: typing must land in the field, not in the
+      // single-key board shortcuts (§36).
+      const id = create(context, at);
+      setSelectedIds([id]);
+      setFocusTitleFor(id);
+    },
+    // `context` holds this document/history and stable clock/id functions; avoid re-registering commands on selection.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc, history, engine]);
+    [doc, history, engine],
+  );
+  const addNote = useCallback(() => addManualNode(createNoteNode), [addManualNode]);
+  const addPerson = useCallback(() => addManualNode(createPersonNode), [addManualNode]);
 
   // The rest of the board bar, as commands (P7 §5.8: every visible action is reachable from the
   // palette). Same handlers as the buttons above them, so the two cannot drift apart.
   useRegisterCommands(
     useMemo(
       () => [
+        {
+          id: 'board.addPerson',
+          title: 'Add person',
+          group: 'board' as const,
+          keywords: ['new', 'create', 'person', 'contact'],
+          when: (ctx: { view: string }) => ctx.view === 'board',
+          run: addPerson,
+        },
         {
           id: 'board.addNote',
           title: 'Add note',
@@ -528,7 +546,7 @@ export function BoardWorkspace() {
           run: () => setViewMode(value),
         })),
       ],
-      [addNote],
+      [addNote, addPerson],
     ),
   );
 
@@ -627,7 +645,7 @@ export function BoardWorkspace() {
         <Button onClick={addNote} data-testid="add-note">
           Add note
         </Button>
-        <QuickAdd onNote={addNote} onCapture={quickCapture} />
+        <QuickAdd onNote={addNote} onPerson={addPerson} onCapture={quickCapture} />
         <Button
           variant="secondary"
           onClick={() => openArrange(!arrangeOpen)}

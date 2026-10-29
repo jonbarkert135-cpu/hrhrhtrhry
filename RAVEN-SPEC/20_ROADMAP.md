@@ -1,5 +1,15 @@
 # Raven — 20 — IMPLEMENTATION ROADMAP (open phases + shipped ledger)
 
+> **Owner-directed silver revision (2026-10-29).** The current brand uses deep black surfaces
+> and a silver accent; historical Azure examples below are superseded by
+> `packages/ui/src/tokens/{color.css,tokens.ts}`. Status and entity taxonomy colors remain semantic.
+> The public, lazy `/welcome` route uses original local Raven artwork, a metallic workspace link,
+> finite entrance motion and reduced-motion support. `/` remains the existing workspace entry:
+> no registration in local mode, existing auth in server mode. Canvas cards show actual origin
+> labels; Quick Add → Person and the Add person command use registry defaults and one undo step.
+> The node store now reconnects after React StrictMode cleanup, keeping inspector edits visible.
+> These are workspace/brand improvements; collection forms and record import screens remain separate work.
+
 ## Scope
 
 This file is the executable plan for **work that is still open**. Each open phase is one
