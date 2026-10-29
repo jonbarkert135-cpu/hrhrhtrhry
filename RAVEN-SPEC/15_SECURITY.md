@@ -1527,3 +1527,8 @@ Both API and web now require Better-Auth 1.7.14 (patched floor for these advisor
 Library telemetry is explicitly disabled in the server auth configuration. Existing CSRF,
 cookie and signup-rate policies are retained; signup/session/sign-out browser journeys and
 `pnpm audit --audit-level high --prod` are the acceptance checks. No audit gate is relaxed.
+
+The web image also pins go-jose 4.1.6 while building Caddy 2.11.7, addressing
+[CVE-2026-116587](https://github.com/advisories/GHSA-mgcc-cww5-fp2q) without relaxing Trivy.
+Scanner findings are emitted as GitHub check annotations, with the original HIGH/CRITICAL
+exit-code policy retained.

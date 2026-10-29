@@ -5,7 +5,11 @@
 FROM golang:1.27.3-alpine AS caddy-build
 ENV GOMAXPROCS=2 CGO_ENABLED=0
 RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
-RUN xcaddy build v2.11.7 --replace golang.org/x/net=golang.org/x/net@v0.60.0 --output /usr/bin/caddy
+# Caddy 2.11.7 resolves go-jose 4.1.5; 4.1.6 fixes CVE-2026-116587 (JWK parsing DoS).
+RUN xcaddy build v2.11.7 \
+    --replace golang.org/x/net=golang.org/x/net@v0.60.0 \
+    --replace github.com/go-jose/go-jose/v4=github.com/go-jose/go-jose/v4@v4.1.6 \
+    --output /usr/bin/caddy
 
 FROM node:22-alpine AS build
 ENV PNPM_HOME=/pnpm CI=1
