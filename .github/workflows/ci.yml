@@ -225,6 +225,14 @@ jobs:
           severity: 'HIGH,CRITICAL'
           exit-code: '1'
           ignore-unfixed: true
+          format: json
+          output: trivy-result.json
+      - name: Annotate container vulnerability findings
+        if: failure()
+        run: |
+          if [ -f trivy-result.json ]; then
+            jq -r '.Results[]?.Vulnerabilities[]? | "::error title=Container security finding::\(.PkgName) \(.VulnerabilityID) (\(.InstalledVersion)); fixed in \(.FixedVersion)"' trivy-result.json
+          fi
 
   migrate-check:
     runs-on: ubuntu-latest
