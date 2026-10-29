@@ -1121,3 +1121,10 @@ evidence, ссылки/отношения, формы и saved views. Репоз
 retention purge и browser E2E `e2e/datasets/repository.spec.ts`.
 Формы UI, Data Hub, табличные импортёры и запись projections в граф — следующие этапы;
 модель не объявляет их реализованными.
+
+## Workspace UX refinement (2026-10-28)
+
+Обновлены оболочка, список досок, пустые состояния и выбор шаблона доски; добавлены поиск,
+сортировка, доступный вход в command palette и плавные enter/exit-переходы с reduced-motion.
+Дизайн и acceptance journeys: [04 DESIGN SYSTEM](04_DESIGN_SYSTEM.md#workspace-and-motion-refinement-2026-10-28).
+Это улучшение существующего UI; формы записей Data Intelligence остаются следующим этапом.

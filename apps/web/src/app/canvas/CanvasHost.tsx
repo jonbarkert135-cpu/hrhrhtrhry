@@ -5,6 +5,7 @@
  * React renders this shell exactly once per mount; every frame after that is painted by the engine.
  */
 
+import { Share1Icon } from '@radix-ui/react-icons';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useCanvasEngine } from './useCanvasEngine';
@@ -125,9 +126,13 @@ export function CanvasHost({
           aria-label="Board minimap. Click or drag to move the view, scroll to zoom."
         />
         {nodeCount === 0 ? (
-          <p className="nx-canvas-empty" data-testid="canvas-empty">
-            Paste a link, drop a file, or press N for a note
-          </p>
+          <div className="nx-canvas-empty" data-testid="canvas-empty">
+            <span className="nx-empty-emblem" aria-hidden="true">
+              <Share1Icon />
+            </span>
+            <strong>Make the first connection</strong>
+            <p>Paste a link, drop a file, or press N for a note</p>
+          </div>
         ) : null}
       </div>
 

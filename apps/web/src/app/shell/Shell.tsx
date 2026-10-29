@@ -1,7 +1,16 @@
-import type { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useState, type ReactNode } from 'react';
+import { NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
+import {
+  ChevronRightIcon,
+  DashboardIcon,
+  GearIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+  CheckCircledIcon,
+} from '@radix-ui/react-icons';
+import { authClient } from '../../lib/auth';
 import { Banner, Button, Menu, MenuItem, Skeleton, SkipToContent } from '@nexus/ui';
-import { CommandPalette } from '../commands/palette';
+import { CommandPalette, openCommandPalette } from '../commands/palette';
 import { useRegisterCommands } from '../commands/useRegisterCommands';
 import type { Command } from '../commands/registry';
 import { useBoardStatus } from './boardStatus';
@@ -83,7 +92,8 @@ function ProjectRailRow({
   return (
     <li className="nx-rail-item">
       <NavLink className="nx-rail-row" to={`/p/${project.id}`}>
-        {project.name}
+        <DashboardIcon aria-hidden="true" />
+        <span>{project.name}</span>
       </NavLink>
       <Menu
         trigger={
@@ -175,7 +185,10 @@ function StatusBar() {
   const { counts, persistence } = useBoardStatus();
   return (
     <footer className="nx-statusbar">
-      <span aria-live="polite">{persistence}</span>
+      <span className="nx-save-status" aria-live="polite">
+        <CheckCircledIcon aria-hidden="true" />
+        {persistence}
+      </span>
       {counts === null ? (
         <span className="nx-muted">No board open</span>
       ) : (
@@ -208,6 +221,32 @@ export function Shell({
   userName = 'Account',
   authEnabled = capabilities.auth,
 }: ShellProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
+  const [signingOut, setSigningOut] = useState(false);
+  const [accountError, setAccountError] = useState(false);
+  const title =
+    location.pathname === '/settings'
+      ? 'Workspace settings'
+      : location.pathname === '/system'
+        ? 'System overview'
+        : params.projectId !== undefined
+          ? 'Project workspace'
+          : boardTitle;
+  const signOut = async () => {
+    setSigningOut(true);
+    setAccountError(false);
+    try {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error('Sign out failed');
+      await navigate('/login');
+    } catch {
+      setAccountError(true);
+    } finally {
+      setSigningOut(false);
+    }
+  };
   return (
     <div className="nx-app">
       <SkipToContent targetId="nx-main">Skip to content</SkipToContent>
@@ -226,38 +265,118 @@ export function Shell({
             Raven <span className="nx-brand-word-soft">OSINT</span>
           </span>
         </span>
-        <Menu trigger={<Button variant="ghost">{orgName}</Button>}>
-          <MenuItem>{orgName}</MenuItem>
-        </Menu>
-        <h1 className="nx-topbar-title">{boardTitle}</h1>
+        <span className="nx-workspace-name">{orgName}</span>
+        <ChevronRightIcon className="nx-breadcrumb-divider" aria-hidden="true" />
+        <h1 className="nx-topbar-title">{title}</h1>
         <div className="nx-topbar-spacer" />
+        <Button
+          className="nx-command-trigger"
+          variant="ghost"
+          onClick={openCommandPalette}
+          aria-label="Search commands"
+          icon={<MagnifyingGlassIcon aria-hidden="true" />}
+        >
+          <span>Search commands</span>
+          <kbd>Ctrl / ⌘ K</kbd>
+        </Button>
         <NavLink className="nx-topbar-link" to="/system">
           System
         </NavLink>
-        <Menu trigger={<Button variant="ghost">{userName}</Button>} align="end">
-          <MenuItem>Settings</MenuItem>
-          {authEnabled ? <MenuItem>Sign out</MenuItem> : null}
+        <Menu
+          trigger={
+            <Button variant="ghost" className="nx-account-trigger" aria-label={userName}>
+              <span className="nx-account-avatar" aria-hidden="true">
+                {userName.charAt(0)}
+              </span>
+              <span>{userName}</span>
+            </Button>
+          }
+          align="end"
+        >
+          <MenuItem
+            onSelect={() => {
+              void navigate('/settings');
+            }}
+          >
+            Settings
+          </MenuItem>
+          <MenuItem
+            onSelect={() => {
+              void navigate('/system');
+            }}
+          >
+            System
+          </MenuItem>
+          {authEnabled ? (
+            <MenuItem
+              disabled={signingOut}
+              onSelect={() => {
+                void signOut();
+              }}
+            >
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </MenuItem>
+          ) : null}
         </Menu>
       </header>
 
       <div className="nx-body">
         <nav className="nx-rail" aria-label="Projects">
-          <ProjectRail
-            {...{
-              loading,
-              error,
-              onRetry,
-              projects,
-              onCreateProject,
-              canMutateProjects,
-              onRenameProject,
-              onArchiveProject,
-              onDeleteProject,
-            }}
-          />
+          <div className="nx-rail-heading">
+            <span>Projects</span>
+            {onCreateProject ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Add project"
+                onClick={onCreateProject}
+                icon={<PlusIcon aria-hidden="true" />}
+              />
+            ) : null}
+          </div>
+          <div className="nx-rail-projects">
+            <ProjectRail
+              {...{
+                loading,
+                error,
+                onRetry,
+                projects,
+                onCreateProject,
+                canMutateProjects,
+                onRenameProject,
+                onArchiveProject,
+                onDeleteProject,
+              }}
+            />
+          </div>
+          <div className="nx-rail-footer">
+            <NavLink className="nx-rail-row" to="/settings">
+              <GearIcon aria-hidden="true" />
+              <span>Settings</span>
+            </NavLink>
+            <div className="nx-workspace-mode">
+              <span className="nx-mode-indicator" />
+              <div>
+                <strong>{authEnabled ? 'Organization workspace' : 'On this device'}</strong>
+                <span>
+                  {authEnabled ? 'Organization access applies' : 'Your research stays local'}
+                </span>
+              </div>
+            </div>
+          </div>
         </nav>
 
         <main id="nx-main" className="nx-surface" tabIndex={-1}>
+          {accountError ? (
+            <div className="nx-account-error">
+              <Banner kind="danger" title="Couldn't sign out">
+                Check your connection and try again from the account menu.
+                <Button variant="ghost" onClick={() => setAccountError(false)}>
+                  Dismiss
+                </Button>
+              </Banner>
+            </div>
+          ) : null}
           {loading ? (
             <div className="nx-stack" aria-busy="true" aria-label="Loading board">
               <Skeleton height="var(--nx-space-9)" />

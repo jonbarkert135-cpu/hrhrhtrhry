@@ -1,16 +1,24 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, useLocation } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 import { WorkspaceProvider } from '../../data/workspace/context';
 import { fakeWorkspaceRepository } from '../../data/workspace/testFakes';
 import { Shell } from './Shell';
+
+const { signOut } = vi.hoisted(() => ({ signOut: vi.fn() }));
+vi.mock('../../lib/auth', () => ({ authClient: { signOut } }));
+function LocationReport() {
+  return <output aria-label="Current route">{useLocation().pathname}</output>;
+}
 
 function renderShell(props: Partial<Parameters<typeof Shell>[0]> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
+        <LocationReport />
         <WorkspaceProvider repository={fakeWorkspaceRepository()}>
           <Shell {...props}>
             <p>board</p>
@@ -55,3 +63,43 @@ describe('Shell', () => {
     expect(screen.getByRole('heading', { name: 'Case 12' })).toBeInTheDocument();
   });
 });
+
+it('opens commands from the visible search button and supports keyboard dismissal', async () => {
+  renderShell();
+  await userEvent.click(screen.getByRole('button', { name: 'Search commands' }));
+  expect(await screen.findByRole('dialog', { name: 'Command palette' })).toBeInTheDocument();
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+it('navigates from the account menu instead of rendering inactive items', async () => {
+  renderShell();
+  await userEvent.click(screen.getByRole('button', { name: 'Account' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Settings' }));
+  expect(screen.getByLabelText('Current route')).toHaveTextContent('/settings');
+  expect(screen.getByRole('heading', { name: 'Workspace settings' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Account' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'System' }));
+  expect(screen.getByLabelText('Current route')).toHaveTextContent('/system');
+});
+it('signs out only on an explicit action and navigates after success', async () => {
+  signOut.mockResolvedValue({ error: null });
+  renderShell({ authEnabled: true });
+  expect(signOut).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole('button', { name: 'Account' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+  await waitFor(() => expect(screen.getByLabelText('Current route')).toHaveTextContent('/login'));
+});
+it.each([false, true])(
+  'keeps the workspace usable when sign out fails (network: %s)',
+  async (networkFailure) => {
+    if (networkFailure) signOut.mockRejectedValue(new Error('Unavailable'));
+    else signOut.mockResolvedValue({ error: { message: 'Unavailable' } });
+    renderShell({ authEnabled: true });
+    await userEvent.click(screen.getByRole('button', { name: 'Account' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+    expect(await screen.findByText("Couldn't sign out")).toBeInTheDocument();
+    expect(screen.getByLabelText('Current route')).toHaveTextContent('/');
+    await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByText("Couldn't sign out")).not.toBeInTheDocument();
+  },
+);

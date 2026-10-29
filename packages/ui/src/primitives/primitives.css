@@ -19,7 +19,13 @@
   transition:
     background-color var(--nx-dur-1) var(--nx-ease-standard),
     border-color var(--nx-dur-1) var(--nx-ease-standard),
-    color var(--nx-dur-1) var(--nx-ease-standard);
+    color var(--motion-feedback-duration) var(--motion-ease-enter),
+    transform var(--motion-feedback-duration) var(--motion-ease-enter),
+    box-shadow var(--motion-feedback-duration) var(--motion-ease-enter),
+    filter var(--motion-feedback-duration) var(--motion-ease-enter);
+}
+.nx-btn:active:not(:disabled):not([aria-disabled='true']) {
+  transform: translateY(1px);
 }
 .nx-btn:focus-visible {
   outline: none;
@@ -278,7 +284,7 @@
   z-index: var(--nx-z-dialog);
   width: var(--dialog-width-md);
   max-width: calc(100% - var(--nx-space-8));
-  max-height: calc(100vh - var(--nx-space-10));
+  max-height: calc(100dvh - var(--nx-space-10));
   overflow: auto;
   transform: translate(-50%, -50%);
   padding: var(--dialog-padding);
@@ -410,8 +416,37 @@
 @keyframes nx-dialog-in {
   from {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 8px)) scale(0.97);
+    transform: translate(-50%, calc(-50% + var(--motion-distance))) scale(0.97);
   }
+}
+@keyframes nx-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes nx-overlay-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes nx-dialog-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + var(--motion-distance))) scale(0.98);
+  }
+}
+.nx-dialog-overlay[data-state='closed'] {
+  animation: nx-fade-out var(--motion-exit-duration) var(--motion-ease-exit);
+}
+.nx-dialog[data-state='closed'] {
+  animation: nx-dialog-out var(--motion-exit-duration) var(--motion-ease-exit);
+}
+.nx-menu {
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+}
+.nx-menu[data-state='closed'] {
+  animation: nx-overlay-out var(--motion-exit-duration) var(--motion-ease-exit);
 }
 .nx-dialog-overlay[data-state='open'] {
   animation: nx-fade-in var(--nx-dur-4) var(--nx-ease-out);
@@ -425,6 +460,9 @@
   animation: nx-overlay-in var(--nx-dur-3) var(--nx-ease-out);
 }
 @media (prefers-reduced-motion: reduce) {
+  .nx-dialog-overlay[data-state='closed'],
+  .nx-dialog[data-state='closed'],
+  .nx-menu[data-state='closed'],
   .nx-dialog-overlay[data-state='open'],
   .nx-dialog[data-state='open'],
   .nx-menu[data-state='open'],

@@ -12,3 +12,14 @@
   --nx-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
   --nx-ease-linear: linear;
 }
+
+/* Semantic motion roles shared by product chrome and overlay primitives. */
+:root {
+  --motion-feedback-duration: var(--nx-dur-2);
+  --motion-panel-duration: var(--nx-dur-4);
+  --motion-exit-duration: var(--nx-dur-3);
+  --motion-route-duration: var(--nx-dur-4);
+  --motion-distance: var(--nx-space-3);
+  --motion-ease-enter: var(--nx-ease-out);
+  --motion-ease-exit: var(--nx-ease-in);
+}

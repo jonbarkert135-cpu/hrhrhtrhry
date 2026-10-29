@@ -1,5 +1,6 @@
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowTopRightIcon, DashboardIcon } from '@radix-ui/react-icons';
 import { Button, Menu, MenuItem } from '@nexus/ui';
 import type { WorkspaceBoard, WorkspaceRole } from '../data/workspace/types';
 import {
@@ -19,21 +20,6 @@ import type { Command } from '../app/commands/registry';
 /** True once a viewer cannot mutate — every button below reads this, never a second copy. */
 export function canMutate(role: WorkspaceRole): boolean {
   return role !== 'viewer';
-}
-
-/**
- * A deterministic placeholder in lieu of the worker-generated thumbnail (P7 §8/§11): no
- * `apps/worker` exists yet to render board snapshots, so a real thumbnail is out of scope this
- * phase. The placeholder is still *useful* (distinct per board, not a generic grey box) rather
- * than a stub — a small hashed gradient keyed on the board id.
- */
-function placeholderStyle(boardId: string): CSSProperties {
-  let hash = 0;
-  for (const ch of boardId) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  const hue = hash % 360;
-  return {
-    background: `linear-gradient(135deg, hsl(${String(hue)} 45% 30%), hsl(${String((hue + 40) % 360)} 45% 18%))`,
-  };
 }
 
 export function BoardCard({ board, role }: { board: WorkspaceBoard; role: WorkspaceRole }) {
@@ -111,12 +97,15 @@ export function BoardCard({ board, role }: { board: WorkspaceBoard; role: Worksp
   return (
     <li>
       <div className="nx-board-card" data-archived={board.archivedAt !== null || undefined}>
-        <Link
-          className="nx-board-card-thumb"
-          to={`/b/${board.id}`}
-          style={placeholderStyle(board.id)}
-        >
+        <Link className="nx-board-card-thumb" to={`/b/${board.id}`} aria-label={board.title}>
+          <span className="nx-board-card-emblem" aria-hidden="true">
+            <DashboardIcon />
+          </span>
+          <span className="nx-board-card-kind" aria-hidden="true">
+            {board.archivedAt ? 'Archived board' : 'Research board'}
+          </span>
           <span className="nx-board-card-title">{board.title}</span>
+          <ArrowTopRightIcon className="nx-board-card-arrow" aria-hidden="true" />
           {board.isTemplate ? (
             <span className="nx-badge" aria-hidden="true">
               Template

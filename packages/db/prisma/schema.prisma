@@ -93,6 +93,20 @@ model Membership {
   @@map("memberships")
 }
 
+/// Short-lived verification/OAuth state owned exclusively by Better-Auth.
+model Verification {
+  id         String   @id
+  identifier String
+  value      String   @db.Text
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@index([expiresAt])
+  @@map("auth_verifications")
+}
+
 /// Better-Auth session table (field names per Better-Auth's Prisma adapter).
 model Session {
   id        String   @id
