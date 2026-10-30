@@ -8,7 +8,7 @@ test('public welcome loads its own artwork and opens the existing workspace', as
     if (request.url().includes(':3001/')) apiRequests.push(request.url());
   });
   await page.goto('/welcome');
-  await expect(page.getByRole('heading', { name: 'Raven OSINT.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Raven OSINT' })).toBeVisible();
   await page.locator('.rvn-product').scrollIntoViewIfNeeded();
   await expect
     .poll(() =>
@@ -29,7 +29,7 @@ test('public welcome loads its own artwork and opens the existing workspace', as
   expect(audit.violations.map((violation) => `${violation.id}: ${violation.nodes.length}`)).toEqual(
     [],
   );
-  await page.getByRole('link', { name: 'Open workspace' }).click();
+  await page.locator('.rvn-hero').getByRole('link', { name: 'Open workspace' }).click();
   if (process.env.E2E_UI_MODE === 'local') {
     await expect(page.getByTestId('canvas-surface')).toBeVisible();
     expect(apiRequests).toEqual([]);
@@ -43,7 +43,9 @@ test('welcome remains readable on mobile and respects reduced motion', async ({ 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/welcome');
-  await expect(page.getByRole('link', { name: 'Open workspace' })).toBeVisible();
+  await expect(
+    page.locator('.rvn-hero').getByRole('link', { name: 'Open workspace' }),
+  ).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(
     await page.locator('.rvn-hero-art img').evaluate((el) => getComputedStyle(el).animationName),

@@ -154,7 +154,7 @@ function ProjectRail({
   if (!projects || projects.length === 0) {
     return (
       <div className="nx-stack">
-        <p className="nx-muted">A project holds the boards, runs and files of one investigation.</p>
+        <p className="nx-muted">A project holds the boards, runs and files of one investigation</p>
         <Button onClick={onCreateProject}>Create your first project</Button>
       </div>
     );
@@ -354,6 +354,9 @@ export function Shell({
               <GearIcon aria-hidden="true" />
               <span>Settings</span>
             </NavLink>
+            <Link className="nx-rail-policy" to="/legal/privacy">
+              Data & privacy
+            </Link>
             <div className="nx-workspace-mode">
               <span className="nx-mode-indicator" />
               <div>
@@ -370,7 +373,7 @@ export function Shell({
           {accountError ? (
             <div className="nx-account-error">
               <Banner kind="danger" title="Couldn't sign out">
-                Check your connection and try again from the account menu.
+                Check your connection and try again from the account menu
                 <Button variant="ghost" onClick={() => setAccountError(false)}>
                   Dismiss
                 </Button>

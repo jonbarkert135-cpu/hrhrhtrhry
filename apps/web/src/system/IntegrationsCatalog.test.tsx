@@ -70,13 +70,13 @@ describe('IntegrationsCatalog', () => {
 
   it('stops asking for credentials once the provider is configured', () => {
     const { rerender } = render(<IntegrationsCatalog installed={new Set()} />);
-    const asking = screen.getAllByText(/Needs .* credentials\./);
+    const asking = screen.getAllByText(/Needs .* credentials/);
     expect(asking.length).toBeGreaterThan(0);
-    const provider = /Needs (.*) credentials\./.exec(asking[0]?.textContent ?? '')?.[1] ?? '';
+    const provider = /Needs (.*) credentials/.exec(asking[0]?.textContent ?? '')?.[1] ?? '';
 
     rerender(
       <IntegrationsCatalog installed={new Set()} configuredProviders={new Set([provider])} />,
     );
-    expect(screen.getAllByText(/Needs .* credentials\./).length).toBeLessThan(asking.length);
+    expect(screen.getAllByText(/Needs .* credentials/).length).toBeLessThan(asking.length);
   });
 });

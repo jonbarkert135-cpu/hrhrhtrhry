@@ -118,6 +118,10 @@ export function NodeHosts({
   useEffect(() => {
     if (engine === null) return undefined;
     const offHosts = engine.on('hostsChanged', (next) => setIds([...next]));
+    // A restored board can promote slots before this effect subscribes. Read the engine-owned
+    // slots once, so a missed first event never leaves an otherwise live graph blank.
+    setIds(store.getIds().filter((id) => slotOf(id) !== undefined));
+    setZoom(engine.camera.state.zoom);
     const offCamera = engine.on('cameraChanged', (state) => setZoom(state.zoom));
     // The engine owns hit-testing, so it also owns hover: cards are transparent to the pointer
     // (05 §3), which means CSS `:hover` never fires on them. A port hit still counts as its node —
@@ -138,7 +142,7 @@ export function NodeHosts({
       offHover();
       offIntent();
     };
-  }, [engine, beginEdit]);
+  }, [engine, beginEdit, store, slotOf]);
 
   // Enter on a single selection starts editing — the keyboard path to the same gesture as a
   // double-click (§5.5). Typing inside a field must never be hijacked, hence the target check.

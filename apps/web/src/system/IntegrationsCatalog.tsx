@@ -81,7 +81,7 @@ export function IntegrationsCatalog({
             </div>
             <p className="nx-muted">{entry.detail}</p>
             {entry.needsCredentials ? (
-              <p className="nx-muted">Needs {entry.provider} credentials.</p>
+              <p className="nx-muted">Needs {entry.provider} credentials</p>
             ) : null}
           </li>
         ))}
@@ -91,8 +91,8 @@ export function IntegrationsCatalog({
       {findings.filter((finding) => !ignored.includes(finding.candidate.id)).length === 0 ? (
         <p className="nx-muted" data-testid="discovery-empty">
           {findings.length === 0
-            ? 'No tool scan has run in this build yet — nothing is being proposed.'
-            : 'Everything found has been ignored.'}
+            ? 'No tool scan has run in this build yet — nothing is being proposed'
+            : 'Everything found has been ignored'}
         </p>
       ) : (
         <ul className="nx-activity" data-testid="discovery-list">
@@ -110,7 +110,7 @@ export function IntegrationsCatalog({
                     type="button"
                     className="nx-tab"
                     disabled
-                    title="Installing from outside the built-in catalogue is not wired up yet."
+                    title="Installing from outside the built-in catalogue is not wired up yet"
                   >
                     Install
                   </button>

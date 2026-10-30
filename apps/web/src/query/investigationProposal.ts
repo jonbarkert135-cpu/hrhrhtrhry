@@ -7,6 +7,7 @@
  * import does. This module is the adapter between the two vocabularies and holds no state.
  */
 
+import { builtinNodeTypes } from '@nexus/domain';
 import type { InvestigationResult, Provenance, ResolvedEntity } from '@nexus/query-engine';
 import type { ImportProposal, ProposalItem, ProposedNode } from '@nexus/integrations';
 import type { EntityKind } from '@nexus/transforms';
@@ -87,12 +88,23 @@ export function toImportProposal(
   const nodes: ProposedNode[] = entities.map((entity, index) => {
     const tempId = `q-${String(index)}`;
     tempIdByEntity.set(entity.id, tempId);
+    const nodeType = nodeTypeFor(entity.kind);
+    const defaults = builtinNodeTypes().get(nodeType).defaults.data as Record<string, unknown>;
+    const labelFields = Object.hasOwn(defaults, 'displayName')
+      ? { displayName: entity.label ?? entity.value }
+      : {};
     return {
       tempId,
       identityKey: `${entity.kind}:${entity.value}`,
-      nodeType: nodeTypeFor(entity.kind),
+      nodeType,
       title: entity.label ?? entity.value,
-      props: { ...entity.props, entityKind: entity.kind, value: entity.value },
+      props: {
+        ...defaults,
+        ...labelFields,
+        ...entity.props,
+        entityKind: entity.kind,
+        value: entity.value,
+      },
       tags: [entity.kind],
       provenance: provenanceOf(primarySource(entity), entity.confidence),
       layoutHint: {

@@ -11,11 +11,11 @@ import { PasteToast, TOAST_TIMEOUT_MS } from './PasteToast.tsx';
 
 describe('describePayload', () => {
   it('names the node type before the user commits', () => {
-    expect(describePayload('https://a.example/')).toBe('Adds one website node.');
-    expect(describePayload('https://a.example/\nhttps://b.example/')).toBe('Adds 2 website nodes.');
-    expect(describePayload('a short thought')).toBe('Adds one text node.');
-    expect(describePayload('x'.repeat(281))).toBe('Adds one note.');
-    expect(describePayload('   ')).toBe('Paste a link, several links, or any text.');
+    expect(describePayload('https://a.example/')).toBe('Adds one website node');
+    expect(describePayload('https://a.example/\nhttps://b.example/')).toBe('Adds 2 website nodes');
+    expect(describePayload('a short thought')).toBe('Adds one text node');
+    expect(describePayload('x'.repeat(281))).toBe('Adds one note');
+    expect(describePayload('   ')).toBe('Paste a link, several links, or any text');
   });
 });
 

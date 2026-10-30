@@ -106,7 +106,7 @@ export function ResultsDashboard({ result, onBuildGraph }: ResultsDashboardProps
             </p>
             <p className="nx-muted">{assessEntity(entity).why}</p>
             {raw === undefined ? (
-              <p className="nx-muted">No raw payload was kept for this finding.</p>
+              <p className="nx-muted">No raw payload was kept for this finding</p>
             ) : (
               <details>
                 <summary>View raw result</summary>

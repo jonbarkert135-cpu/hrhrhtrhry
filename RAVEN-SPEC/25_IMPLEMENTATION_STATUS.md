@@ -1,5 +1,15 @@
 # 25 — IMPLEMENTATION STATUS (единый трекер по дорожной карте)
 
+> **Unified Raven interface (2026-10-30).** The owner's `human-web-design` direction now applies
+> across the workspace and landing: heavier self-hosted Manrope, restrained black/silver surfaces,
+> authored display copy without terminal periods, and real Radix state icons. The public footer
+> links to `/legal/{privacy,terms,data-rules,security,copyright,credits}`; these describe local/private
+> server data handling without an invented company or legal contact. A closed 3D Raven relief uses
+> bounded WebGL buffers, a pause control, offscreen/hidden-tab suspension and a static fallback.
+> Query/workflow imports use the existing worker tree layout to the right and orthogonal edges,
+> applied with provenance in one accepted undo step. Existing cards are not repositioned.
+> Node-store content edits no longer deserialize the whole board to refresh an unchanged id list.
+
 > **Owner-directed silver revision (2026-10-29).** The current brand uses deep black surfaces
 > and a silver accent; historical Azure examples below are superseded by
 > `packages/ui/src/tokens/{color.css,tokens.ts}`. Status and entity taxonomy colors remain semantic.

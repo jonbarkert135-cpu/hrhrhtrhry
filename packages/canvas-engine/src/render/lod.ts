@@ -63,13 +63,14 @@ export interface LodController {
   dispose(): void;
 }
 
-export function createLodController(clock: EngineClock): LodController {
+export function createLodController(clock: EngineClock, onSettled?: () => void): LodController {
   let current: PaintLod | null = null;
   let stable = 0;
   let timer: number | null = null;
 
   const release = (): void => {
     timer = null;
+    onSettled?.();
   };
 
   const levelFor = (zoom: number): PaintLod => {

@@ -21,9 +21,9 @@ export interface AiSettingsFormState {
 }
 
 const SOURCE_NOTE: Record<string, string> = {
-  env: 'Currently taken from this deployment’s environment file. Saving here overrides it.',
-  org: 'Configured for this workspace.',
-  none: 'No endpoint yet. AI features stay visible but disabled until one answers.',
+  env: 'Currently taken from this deployment’s environment file. Saving here overrides it',
+  org: 'Configured for this workspace',
+  none: 'No endpoint yet. AI features stay visible but disabled until one answers',
 };
 
 export function AiSettingsSection() {
@@ -75,7 +75,7 @@ export function AiSettingsSection() {
   if (query.isError) {
     return (
       <Banner kind="warn" title="AI settings are admin-only">
-        Ask a workspace admin to configure the AI endpoint.
+        Ask a workspace admin to configure the AI endpoint
       </Banner>
     );
   }
@@ -91,7 +91,7 @@ export function AiSettingsSection() {
       <h3 id="ai-settings-heading">AI endpoint</h3>
       <p className="nx-muted">
         Raven talks to one OpenAI-compatible endpoint that you choose — a local runtime such as
-        Ollama on <code>http://localhost:11434/v1</code> keeps every request on this machine.{' '}
+        Ollama on <code>http://localhost:11434/v1</code> keeps every request on this machine{' '}
         {SOURCE_NOTE[data.effective.source] ?? ''}
       </p>
 
@@ -102,7 +102,7 @@ export function AiSettingsSection() {
         onChange={(event) => {
           set({ baseUrl: event.target.value });
         }}
-        description="Must end in /v1 for most servers. Leave empty to forget the endpoint."
+        description="Must end in /v1 for most servers. Leave empty to forget the endpoint"
       />
       <Field
         label="Chat model"
@@ -119,7 +119,7 @@ export function AiSettingsSection() {
         onChange={(event) => {
           set({ embedModel: event.target.value });
         }}
-        description="Used for semantic search. Without it, search stays keyword-only."
+        description="Used for semantic search. Without it, search stays keyword-only"
       />
 
       <label className="nx-field-label">
@@ -167,13 +167,13 @@ export function AiSettingsSection() {
       ) : null}
       {saved && !update.isPending ? (
         <Banner kind="success" title="AI settings saved">
-          New runs use this endpoint immediately.
+          New runs use this endpoint immediately
         </Banner>
       ) : null}
       {probe?.ok === true ? (
         <Banner kind="success" title="The endpoint answered">
           {probe.models.length === 0
-            ? 'It reports no models yet — pull one on the server, then test again.'
+            ? 'It reports no models yet — pull one on the server, then test again'
             : `Models available: ${probe.models.slice(0, 12).join(', ')}`}
         </Banner>
       ) : null}
@@ -186,8 +186,8 @@ export function AiSettingsSection() {
       <h3>API key</h3>
       <p className="nx-muted">
         {data.key.present
-          ? `A key ending in ${data.key.lastFour ?? '••••'} is stored, encrypted. It is never shown again.`
-          : 'No key stored. Local runtimes usually need none; hosted gateways do.'}
+          ? `A key ending in ${data.key.lastFour ?? '••••'} is stored, encrypted. It is never shown again`
+          : 'No key stored. Local runtimes usually need none; hosted gateways do'}
       </p>
       <Field
         label="New key"

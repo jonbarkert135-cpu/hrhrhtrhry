@@ -49,8 +49,11 @@ describe('ExecutionView', () => {
 
     expect(screen.getByTestId('exec-query')).toHaveTextContent('example.com');
     expect(screen.getByTestId('exec-planner')).toHaveTextContent('2 step(s)');
-    expect(screen.getByTestId('exec-domain-to-dns')).toHaveTextContent('✅');
-    expect(screen.getByTestId('exec-domain-to-certificates')).toHaveTextContent('⏳');
+    expect(screen.getByTestId('exec-domain-to-dns')).toHaveAttribute('data-state', 'done');
+    expect(screen.getByTestId('exec-domain-to-certificates')).toHaveAttribute(
+      'data-state',
+      'running',
+    );
     // The three downstream stages are always drawn, pending until the engines settle.
     expect(screen.getByTestId('exec-aggregator')).toHaveTextContent('2 result(s)');
     expect(screen.getByTestId('exec-resolver')).toBeInTheDocument();

@@ -34,7 +34,7 @@ export function ImportDialog({ open, onOpenChange, onConfirm }: ImportDialogProp
       setError(null);
     } catch (cause) {
       setPreview(null);
-      setError(cause instanceof Error ? cause.message : 'This file could not be read.');
+      setError(cause instanceof Error ? cause.message : 'This file could not be read');
     }
   }
 
@@ -43,7 +43,7 @@ export function ImportDialog({ open, onOpenChange, onConfirm }: ImportDialogProp
       open={open}
       onOpenChange={onOpenChange}
       title="Import a board"
-      description="Nodes, edges, groups and notes from a .raven.json file are added to this board."
+      description="Nodes, edges, groups and notes from a .raven.json file are added to this board"
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
@@ -80,7 +80,7 @@ export function ImportDialog({ open, onOpenChange, onConfirm }: ImportDialogProp
         <div data-testid="import-summary" className="nx-stack">
           <p>
             <strong>{preview.data.board.title}</strong> — {String(preview.data.nodes.length)} nodes,{' '}
-            {String(preview.data.edges.length)} edges, {String(preview.data.groups.length)} groups.
+            {String(preview.data.edges.length)} edges, {String(preview.data.groups.length)} groups
           </p>
           {preview.migrations.length > 0 ? (
             <Banner kind="info" title="This file uses an older format">

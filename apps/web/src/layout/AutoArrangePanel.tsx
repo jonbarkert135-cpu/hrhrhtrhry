@@ -86,7 +86,7 @@ export function AutoArrangePanel({
         if (result !== null) previewed(result);
       })
       .catch((error: unknown) => {
-        failed(error instanceof Error ? error.message : 'The layout could not be computed.');
+        failed(error instanceof Error ? error.message : 'The layout could not be computed');
       });
   }, [doc, scope, selectedIds, algorithm, options, started, progressed, previewed, failed]);
 
@@ -164,6 +164,17 @@ export function AutoArrangePanel({
         </label>
       </fieldset>
 
+      <Button
+        variant="secondary"
+        onClick={() => {
+          store.setAlgorithm('tree');
+          store.setOption('direction', 'right');
+          store.setOption('spacingX', 48);
+          store.setOption('spacingY', 128);
+        }}
+      >
+        Investigation tree
+      </Button>
       <label htmlFor="auto-arrange-algorithm">Layout</label>
       <select
         id="auto-arrange-algorithm"
@@ -283,9 +294,9 @@ export function AutoArrangePanel({
       </div>
 
       <div role="status" aria-live="polite" data-testid="auto-arrange-status">
-        {emptyBoard ? 'Nothing to lay out yet.' : null}
+        {emptyBoard ? 'Nothing to lay out yet' : null}
         {!emptyBoard && selectionTooSmall
-          ? 'Select at least two nodes to arrange a selection.'
+          ? 'Select at least two nodes to arrange a selection'
           : null}
         {status === 'running' ? (
           <span className="nx-layout-progress">
@@ -293,15 +304,13 @@ export function AutoArrangePanel({
             Arranging… {String(Math.round(store.progress * 100))}%
           </span>
         ) : null}
-        {status === 'empty'
-          ? 'This board is already arranged that way — nothing would move.'
-          : null}
+        {status === 'empty' ? 'This board is already arranged that way — nothing would move' : null}
         {status === 'preview' && diff !== null ? explainLayout(diff) : null}
       </div>
 
       {status === 'error' ? (
         <Banner kind="danger" title="Auto arrange failed">
-          {store.error ?? 'The layout could not be computed.'}
+          {store.error ?? 'The layout could not be computed'}
         </Banner>
       ) : null}
     </section>
@@ -320,7 +329,7 @@ function AppliedToast({
   return (
     <div className="nx-layout-toast" role="status" aria-live="polite" data-testid="layout-toast">
       <span>
-        Arranged {String(count)} node{count === 1 ? '' : 's'}. One undo puts them back.
+        Arranged {String(count)} node{count === 1 ? '' : 's'}. One undo puts them back
       </span>
       <Button variant="secondary" onClick={onUndo} data-testid="layout-toast-undo">
         Undo

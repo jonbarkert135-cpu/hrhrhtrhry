@@ -72,7 +72,7 @@ export function RunConsole({
       >
         {lines.length === 0 ? (
           <p className="nx-console-line" data-level="info">
-            Nothing has run yet.
+            Nothing has run yet
           </p>
         ) : (
           lines.map((line) => (

@@ -12,18 +12,18 @@ export const trpc = createTRPCReact<AppRouter>();
 
 /** 03_UX.md §12.1: what happened · why · what to do. Never a bare code, never "Oops". */
 const ERROR_COPY: Record<string, string> = {
-  UNAUTHORIZED: 'Your session ended. Sign in again to continue — your work is not lost.',
-  FORBIDDEN: "You don't have access to this. Ask a project admin for the Analyst role.",
-  NOT_FOUND: 'That item no longer exists. It may have been deleted or moved.',
-  TIMEOUT: 'The server took too long to answer. Check your connection and try again.',
-  CONFLICT: 'Someone else changed this first. Reload to see the current version.',
-  TOO_MANY_REQUESTS: 'Too many attempts. Wait a minute, then try again.',
-  BAD_REQUEST: "That request wasn't valid. Check the highlighted fields and try again.",
-  PAYLOAD_TOO_LARGE: 'That file is too large. Try a smaller file.',
-  INTERNAL_SERVER_ERROR: "The server couldn't complete that. Try again — nothing was changed.",
+  UNAUTHORIZED: 'Your session ended. Sign in again to continue — your work is not lost',
+  FORBIDDEN: "You don't have access to this. Ask a project admin for the Analyst role",
+  NOT_FOUND: 'That item no longer exists. It may have been deleted or moved',
+  TIMEOUT: 'The server took too long to answer. Check your connection and try again',
+  CONFLICT: 'Someone else changed this first. Reload to see the current version',
+  TOO_MANY_REQUESTS: 'Too many attempts. Wait a minute, then try again',
+  BAD_REQUEST: "That request wasn't valid. Check the highlighted fields and try again",
+  PAYLOAD_TOO_LARGE: 'That file is too large. Try a smaller file',
+  INTERNAL_SERVER_ERROR: "The server couldn't complete that. Try again — nothing was changed",
 };
 
-const FALLBACK_COPY = "That didn't work. Try again — nothing was changed.";
+const FALLBACK_COPY = "That didn't work. Try again — nothing was changed";
 
 export function errorCode(error: unknown): string | undefined {
   if (error instanceof TRPCClientError) {

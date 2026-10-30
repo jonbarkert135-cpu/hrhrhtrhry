@@ -87,7 +87,8 @@ describe('NodeHosts', () => {
     const { engine, emitHosts } = fakeEngine();
     render(<NodeHosts engine={engine} doc={doc} store={store} slotOf={(id) => slots.get(id)} />);
 
-    expect(screen.queryByText('First')).not.toBeInTheDocument();
+    // Existing promoted slots are read even when their initial event preceded the subscription.
+    expect(screen.getByText('First')).toBeInTheDocument();
 
     act(() => emitHosts(ids));
     expect(screen.getByText('First')).toBeInTheDocument();

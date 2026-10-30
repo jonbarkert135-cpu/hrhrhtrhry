@@ -1,4 +1,5 @@
 import { AiSettingsSection } from '../../settings/AiSettingsSection.tsx';
+import { Link } from 'react-router-dom';
 import { localOnly } from '../../mode/appMode.ts';
 
 export default function SettingsPage() {
@@ -8,12 +9,12 @@ export default function SettingsPage() {
       {localOnly ? (
         <p className="nx-muted">
           AI settings live on the server. This build runs local-only, so there is nothing to
-          configure here.
+          configure here
         </p>
       ) : (
         <AiSettingsSection />
       )}
-      <p className="nx-muted">Account and appearance settings arrive in later phases.</p>
+      <Link to="/legal/privacy">Review how your data is stored</Link>
     </section>
   );
 }

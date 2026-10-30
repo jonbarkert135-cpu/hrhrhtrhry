@@ -34,8 +34,8 @@ describe('SignupPage', () => {
     renderPage();
     await user.type(screen.getByLabelText('Password'), 'short');
     await user.click(screen.getByRole('button', { name: 'Create account' }));
-    expect(screen.getByText('Enter an email address, like you@example.com.')).toBeInTheDocument();
-    expect(screen.getByText('Use at least 12 characters.')).toBeInTheDocument();
+    expect(screen.getByText('Enter an email address, like you@example.com')).toBeInTheDocument();
+    expect(screen.getByText('Use at least 12 characters')).toBeInTheDocument();
     expect(signUpEmail).not.toHaveBeenCalled();
   });
 
@@ -45,7 +45,7 @@ describe('SignupPage', () => {
     renderPage();
     await user.type(screen.getByLabelText('Name'), 'Ana');
     await fillAndSubmit(user);
-    expect(await screen.findByText('Check your email')).toBeInTheDocument();
+    expect(await screen.findByText('Continue to sign in')).toBeInTheDocument();
     expect(signUpEmail).toHaveBeenCalledWith({
       email: 'analyst@example.com',
       password: 'hunter2hunter2',
@@ -58,7 +58,7 @@ describe('SignupPage', () => {
     const user = userEvent.setup();
     renderPage();
     await fillAndSubmit(user);
-    expect(await screen.findByText('Check your email')).toBeInTheDocument();
+    expect(await screen.findByText('Continue to sign in')).toBeInTheDocument();
   });
 
   it('shows a banner when the server cannot be reached', async () => {
@@ -68,7 +68,7 @@ describe('SignupPage', () => {
     await fillAndSubmit(user);
     expect(await screen.findByText("Couldn't create your account")).toBeInTheDocument();
     expect(
-      screen.getByText("We couldn't reach the server. Check your connection and try again."),
+      screen.getByText("We couldn't reach the server. Check your connection and try again"),
     ).toBeInTheDocument();
   });
 });

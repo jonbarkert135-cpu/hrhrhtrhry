@@ -63,7 +63,7 @@ export function IntegrationPicker({
       {integrations.length === 0 ? (
         <p className="nx-muted" data-testid="picker-empty">
           No tools are installed on this server. Ask an admin to install one — the built-in URL
-          expander is always available once integrations are enabled.
+          expander is always available once integrations are enabled
         </p>
       ) : null}
 

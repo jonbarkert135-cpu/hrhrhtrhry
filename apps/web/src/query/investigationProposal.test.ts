@@ -85,6 +85,31 @@ const result = (): InvestigationResult => ({
 });
 
 describe('toImportProposal', () => {
+  it('fills registry defaults for people and preserves unrecognized source fields', () => {
+    const input = result();
+    const person = {
+      ...input.entities[1]!,
+      id: 'person:training',
+      kind: 'person' as const,
+      value: 'Mira Example',
+      label: 'Mira Example',
+      props: { sourceNote: 'Fictional training claim' },
+    };
+    const output = toImportProposal(
+      { ...input, entities: [person], relations: [] },
+      { boardId: 'b1', runId: 'r-person' },
+    );
+    const item = output.items[0];
+    expect(item?.kind).toBe('new_node');
+    if (item?.kind !== 'new_node') throw new Error('Person proposal missing');
+    expect(item.node.props).toMatchObject({
+      displayName: 'Mira Example',
+      emails: [],
+      usernames: [],
+      sourceNote: 'Fictional training claim',
+    });
+  });
+
   it('maps entity kinds onto real node types', () => {
     expect(nodeTypeFor('domain')).toBe('website');
     expect(nodeTypeFor('repo')).toBe('repo');

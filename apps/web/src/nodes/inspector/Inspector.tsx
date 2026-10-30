@@ -105,7 +105,7 @@ function ReferencedFrom({ source }: { source: ClipSource }) {
       <h3>Referenced from</h3>
       <p className="nx-card-meta">
         Pasted from <a href={href}>{source.boardTitle ?? source.boardId}</a>. The original stays
-        where it is — this copy is independent.
+        where it is — this copy is independent
       </p>
     </section>
   );
@@ -163,7 +163,7 @@ export function Inspector({
         </header>
         <p className="nx-inspector-empty">
           Select a node to see its details. Shift-click or drag a box to select several and edit
-          what they share.
+          what they share
         </p>
         <p className="nx-card-meta">
           {String(listNodes(doc).length)} nodes · {String(listEdges(doc).length)} connections
@@ -229,7 +229,7 @@ export function Inspector({
           <h2>Node deleted</h2>
         </header>
         <p className="nx-inspector-empty">
-          This node is gone. Press ⌘Z to bring it back, or select another node.
+          This node is gone. Press ⌘Z to bring it back, or select another node
         </p>
       </aside>
     );
@@ -415,7 +415,7 @@ export function Inspector({
         <h3>Connections</h3>
         {connections.length === 0 ? (
           <p className="nx-card-meta">
-            No connections yet. Press C, aim with ← →, then Enter — or drag from the card's edge.
+            No connections yet. Press C, aim with ← →, then Enter — or drag from the card's edge
           </p>
         ) : (
           <ul className="nx-inspector-list">

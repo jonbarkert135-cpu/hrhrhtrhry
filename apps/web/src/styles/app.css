@@ -2809,3 +2809,196 @@
     border-style: dashed;
   }
 }
+
+/* Shared Raven instrument-panel surfaces across workspace, settings and research drawers */
+@layer components {
+  .nx-topbar {
+    padding-inline: var(--nx-space-5);
+    background: var(--material-card-bg);
+    backdrop-filter: none;
+  }
+  .nx-rail {
+    background: var(--surface-0);
+    backdrop-filter: none;
+    padding-top: var(--nx-space-7);
+  }
+  .nx-brand-word {
+    background: none;
+    color: var(--fg-primary);
+    font: var(--text-title);
+    font-weight: var(--nx-weight-bold);
+    text-transform: none;
+  }
+  .nx-brand-word-soft {
+    font-weight: var(--nx-weight-medium);
+    color: var(--fg-secondary);
+  }
+  .nx-rail-row {
+    min-height: var(--nx-size-xl);
+    font-weight: var(--nx-weight-medium);
+  }
+  .nx-rail-row[aria-current='page'] {
+    background: var(--material-card-bg);
+    border-color: var(--border-strong);
+    box-shadow: var(--material-card-shadow);
+  }
+  .nx-rail-policy {
+    display: block;
+    padding: var(--nx-space-3) var(--nx-space-4);
+    color: var(--fg-secondary);
+    font: var(--text-body-sm);
+    text-decoration: none;
+  }
+  .nx-board-bar {
+    background: var(--surface-0);
+    gap: var(--nx-space-3);
+    padding: var(--nx-space-4);
+    border-bottom-color: var(--border-default);
+  }
+  .nx-board-bar .nx-btn {
+    border-radius: var(--nx-radius-full);
+    font-weight: var(--nx-weight-semibold);
+    padding-inline: var(--nx-space-5);
+  }
+  .nx-inspector,
+  .nx-ask-panel,
+  .nx-layout-panel,
+  .nx-system-card {
+    background: var(--surface-1);
+    border-color: var(--border-default);
+  }
+  .nx-inspector h2,
+  .nx-page-title,
+  .nx-ask-panel > header strong {
+    font-weight: var(--nx-weight-bold);
+    letter-spacing: var(--tracking-title);
+  }
+  .nx-board-card {
+    border-radius: var(--nx-radius-5);
+    padding: var(--nx-space-7);
+  }
+  .nx-board-card-title {
+    font: var(--text-title-lg);
+  }
+  .nx-input,
+  .nx-inspector input:not([type='checkbox']):not([type='range']),
+  .nx-inspector textarea {
+    background: var(--surface-0);
+    border-color: var(--border-default);
+    border-radius: var(--nx-radius-3);
+  }
+  .nx-inspector-section {
+    padding-top: var(--nx-space-5);
+  }
+  .nx-page-head {
+    padding-block: var(--nx-space-7);
+  }
+  .nx-node-card {
+    border-color: var(--border-default);
+  }
+  .nx-card-type {
+    border: 0;
+    background: transparent;
+  }
+  .nx-card-heading {
+    padding-top: var(--nx-space-1);
+  }
+  .nx-card-title {
+    font-weight: var(--nx-weight-bold);
+  }
+  .nx-card-origin {
+    margin-top: var(--nx-space-3);
+  }
+  .nx-exec-scroll {
+    overflow: auto;
+    padding: var(--nx-space-5);
+    border: 1px solid var(--border-default);
+    border-radius: var(--nx-radius-4);
+    background: var(--surface-0);
+  }
+  .nx-exec-flow {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr;
+    align-items: center;
+    gap: var(--nx-space-8);
+    min-width: calc(var(--nx-space-10) * 13);
+  }
+  .nx-exec-flow ol {
+    display: grid;
+    gap: var(--nx-space-6);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .nx-exec-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--nx-space-5) 1fr;
+    gap: var(--nx-space-2) var(--nx-space-3);
+    align-items: center;
+    padding: var(--nx-space-4);
+    border: 1px solid var(--border-default);
+    border-radius: var(--nx-radius-3);
+    background: var(--material-card-bg);
+    font: var(--text-body-sm);
+  }
+  .nx-exec-row::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: calc(-1 * var(--nx-space-8));
+    width: var(--nx-space-8);
+    border-top: 1px solid var(--border-strong);
+  }
+  .nx-exec-engines {
+    border-left: 1px solid var(--border-strong);
+    padding-left: var(--nx-space-5) !important;
+  }
+  .nx-exec-row[data-state='running'] {
+    border-color: var(--border-accent);
+  }
+  .nx-exec-detail {
+    grid-column: 2;
+    color: var(--fg-secondary);
+    overflow-wrap: anywhere;
+  }
+  .nx-exec-label {
+    font-weight: var(--nx-weight-semibold);
+  }
+  .nx-exec-mark {
+    display: flex;
+    color: var(--fg-secondary);
+  }
+  .nx-exec-row[data-state='done'] .nx-exec-mark {
+    color: var(--status-success-fg);
+  }
+  .nx-exec-row[data-state='failed'] .nx-exec-mark {
+    color: var(--status-danger-fg);
+  }
+  .nx-exec-row[data-state='running'] .nx-exec-mark svg {
+    animation: nx-exec-spin 2s linear infinite;
+  }
+  @keyframes nx-exec-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nx-exec-row[data-state='running'] .nx-exec-mark svg {
+      animation: none;
+    }
+  }
+}
+@layer components {
+  .nx-node-card {
+    gap: var(--nx-space-2);
+  }
+  .nx-card-body {
+    gap: var(--nx-space-2);
+    min-height: 0;
+  }
+  .nx-card-origin {
+    margin-top: 0;
+    padding-top: var(--nx-space-1);
+  }
+}

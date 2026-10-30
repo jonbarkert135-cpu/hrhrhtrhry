@@ -3,10 +3,15 @@
  * node on a 200-node board notifies exactly one subscriber.
  */
 
-import { createBoardDoc, createNode, deleteNode, updateNodeData } from '@nexus/domain';
+import { createBoardDoc, createNode, deleteNode, updateNodeData, listNodes } from '@nexus/domain';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createNodeStore } from './nodeStore.ts';
+import type * as Domain from '@nexus/domain';
+vi.mock('@nexus/domain', async (original) => {
+  const actual = await original<typeof Domain>();
+  return { ...actual, listNodes: vi.fn(actual.listNodes) };
+});
 
 const T0 = '2026-06-01T00:00:00.000Z';
 
@@ -38,6 +43,22 @@ describe('createNodeStore', () => {
 
     expect(listeners[7]).toHaveBeenCalledTimes(1);
     expect(listeners.filter((spy) => spy.mock.calls.length > 0)).toHaveLength(1);
+    store.destroy();
+  });
+
+  it('edits a card without reading the entire board again', () => {
+    const { doc, ids } = boardWith(200);
+    const store = createNodeStore(doc);
+    store.subscribe(ids[0] ?? '', vi.fn());
+    vi.mocked(listNodes).mockClear();
+    for (let i = 0; i < 20; i += 1)
+      updateNodeData(
+        doc,
+        ids[0] ?? '',
+        { severity: ['info', 'finding', 'critical'][i % 3] },
+        { now: T0 },
+      );
+    expect(listNodes).not.toHaveBeenCalled();
     store.destroy();
   });
 

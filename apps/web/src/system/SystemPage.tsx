@@ -77,11 +77,11 @@ const compatibilityOf = (engine: EngineManifest): string => {
 };
 
 const DEPLOYMENT_NOTE: Readonly<Record<DeploymentKind, string>> = {
-  native: 'Runs directly on the host.',
-  containerized: 'Runs only inside a container, with explicit memory, cpu and pid limits.',
+  native: 'Runs directly on the host',
+  containerized: 'Runs only inside a container, with explicit memory, cpu and pid limits',
   external:
-    'Runs off-box through the remote execution queue; falls back to local when no worker answers.',
-  unsupported: 'Not viable on this host. The alternative column says what replaces it.',
+    'Runs off-box through the remote execution queue; falls back to local when no worker answers',
+  unsupported: 'Not viable on this host. The alternative column says what replaces it',
 };
 
 function CompatibilityTable({
@@ -98,7 +98,7 @@ function CompatibilityTable({
       </h3>
       <p className="nx-system-note">{DEPLOYMENT_NOTE[kind]}</p>
       {rows.length === 0 ? (
-        <p className="nx-system-note">None.</p>
+        <p className="nx-system-note">None</p>
       ) : (
         <table className="nx-table">
           <thead>
@@ -276,7 +276,7 @@ export default function SystemPage() {
       {last ? (
         <p className="nx-system-note" role="status" data-testid="system-action-note">
           {last.action} queued for {last.engine} — {String(last.runs)} run(s) will re-execute on the
-          next investigation.
+          next investigation
         </p>
       ) : null}
 
@@ -288,7 +288,7 @@ export default function SystemPage() {
         <div className="nx-stack nx-compat" data-testid="system-compat">
           <p className="nx-system-note">
             Host profile: self-managed Linux VPS with Docker (RAVEN-SPEC/29 §7). Engines that do not
-            fit are not forced in — they get a stated alternative instead.
+            fit are not forced in — they get a stated alternative instead
           </p>
           {(['native', 'containerized', 'external', 'unsupported'] as const).map((kind) => (
             <CompatibilityTable key={kind} kind={kind} rows={matrix[kind]} />
@@ -298,7 +298,7 @@ export default function SystemPage() {
         <>
           <table className="nx-table" data-testid="system-health">
             <caption className="nx-table-caption">
-              Status is derived from this session&apos;s runs, never self-reported by a service.
+              Status is derived from this session&apos;s runs, never self-reported by a service
             </caption>
             <thead>
               <tr>
@@ -333,7 +333,7 @@ export default function SystemPage() {
             Resource manager: {String(DEFAULT_RESOURCE_BUDGET.concurrency)} run slots ·{' '}
             {String(DEFAULT_RESOURCE_BUDGET.memoryMb)} MB RAM ·{' '}
             {String(DEFAULT_RESOURCE_BUDGET.processes)} processes. No single engine may hold more
-            than 60% of the slots.
+            than 60% of the slots
           </p>
         </>
       ) : (

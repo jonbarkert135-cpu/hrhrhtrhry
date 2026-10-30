@@ -340,7 +340,7 @@ export function CommandPalette() {
       open={open}
       onOpenChange={onOpenChange}
       title="Command palette"
-      description="Search actions, nodes and boards."
+      description="Search actions, nodes and boards"
     >
       <div
         className="nx-stack"
@@ -365,7 +365,7 @@ export function CommandPalette() {
           <p className="nx-muted">Searching every board…</p>
         ) : null}
         {mode === 'workspaceNodes' && workspaceSearch.phase === 'failed' ? (
-          <p className="nx-muted">Could not read the other boards on this device.</p>
+          <p className="nx-muted">Could not read the other boards on this device</p>
         ) : null}
         {rows.length === 0 ? (
           <p className="nx-muted">

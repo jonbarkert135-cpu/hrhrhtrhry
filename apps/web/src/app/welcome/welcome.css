@@ -437,3 +437,61 @@
     transform: none;
   }
 }
+
+.rvn-sculpture {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 0;
+}
+.rvn-sculpture canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--fg-primary);
+  position: relative;
+  opacity: 0;
+}
+.rvn-sculpture .rvn-sculpture-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(0.48);
+  transform: none;
+}
+.rvn-sculpture[data-renderer='webgl'] canvas {
+  opacity: 1;
+}
+.rvn-sculpture[data-renderer='webgl'] .rvn-sculpture-fallback {
+  opacity: 0;
+}
+.rvn-sculpture-pause {
+  position: absolute;
+  bottom: var(--nx-space-3);
+  right: var(--nx-space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nx-space-3);
+  padding: var(--nx-space-3) var(--nx-space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--nx-radius-full);
+  background: var(--surface-1);
+  color: var(--fg-secondary);
+  font: var(--text-body-sm);
+  cursor: pointer;
+}
+.rvn-hero h1,
+.rvn-workflow h2,
+.rvn-principles h2 {
+  text-wrap: balance;
+}
+.rvn-workflow-steps li > svg {
+  width: var(--nx-icon-3);
+  height: var(--nx-icon-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}

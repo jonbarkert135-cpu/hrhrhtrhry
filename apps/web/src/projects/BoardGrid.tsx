@@ -90,8 +90,8 @@ export function BoardGrid({
       {filtered.length === 0 ? (
         <div className="nx-filter-empty">
           <DashboardIcon aria-hidden="true" />
-          <h3>No boards match these filters.</h3>
-          <p>Try a different name or clear your filters.</p>
+          <h3>No boards match these filters</h3>
+          <p>Try a different name or clear your filters</p>
           <Button
             variant="secondary"
             onClick={() => {
@@ -153,7 +153,7 @@ export function NewBoardDialog({
         }
       }}
       title="New board"
-      description="Boards are where the canvas lives. You can rename it later."
+      description="Boards are where the canvas lives. You can rename it later"
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={submitting}>
@@ -194,7 +194,7 @@ export function NewBoardDialog({
               onChange={() => setTemplateId(undefined)}
             />
             <strong>Blank board</strong>
-            <span className="nx-template-description">An open canvas for your investigation.</span>
+            <span className="nx-template-description">An open canvas for your investigation</span>
           </label>
           {BUILTIN_TEMPLATES.map((template) => (
             <label className="nx-radio" key={template.id}>

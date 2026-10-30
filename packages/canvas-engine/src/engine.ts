@@ -8,10 +8,12 @@
  */
 
 import { createCamera, type Camera } from './camera/camera';
+import { worldToScreen } from './camera/coords';
 import {
   EDGE_HIT_TOL_PX,
   HANDLE_HIT_PAD_PX,
   MAX_DOM_NODES,
+  LOD_THRESHOLDS,
   PORT_BAND_PX,
   PORT_MIN_ZOOM,
   WAYPOINT_HIT_PX,
@@ -213,13 +215,14 @@ export function createEngine(options: EngineOptions): Engine {
     invalidate();
   });
 
-  const lod: LodController = createLodController(clock);
+  const lod: LodController = createLodController(clock, invalidate);
 
   const camera: Camera = createCamera({
     viewport: { width: target.size.width, height: target.size.height },
     clock,
     prefersReducedMotion: options.prefersReducedMotion ?? false,
     sceneBounds: () => (graph.query.nodeCount === 0 ? null : graph.query.sceneBounds),
+    onAnimationStart: invalidate,
     entityBounds: (id: EntityId) => {
       const n = graph.query.node(id);
       return n ? { x: n.x, y: n.y, w: n.w, h: n.h } : null;
@@ -363,13 +366,19 @@ export function createEngine(options: EngineOptions): Engine {
         promotionRect.w = target.size.width / zoom;
         promotionRect.h = target.size.height / zoom;
         // The tier is already decided above; the frozen zoom keeps the gate consistent with it.
-        const plan = promotionCandidates(graph.query, cullRect(promotionRect), zoom, domBudget);
+        const plan = promotionCandidates(
+          graph.query,
+          cullRect(promotionRect),
+          Math.max(zoom, LOD_THRESHOLDS.dom),
+          domBudget,
+        );
         for (const id of plan.ids) {
           const node = previewed(graph.nodes.get(id));
           if (node !== undefined && !node.hidden) promoted.push(node);
         }
       }
-      overlay.setTransform({ x: cam.x, y: cam.y, scale: cam.zoom });
+      const origin = worldToScreen(cam, { x: 0, y: 0 });
+      overlay.setTransform({ x: origin.x, y: origin.y, scale: cam.zoom });
       overlay.sync(promoted);
       mountedHosts = promoted.length;
       if (hostSetChanged(promoted)) {
@@ -379,8 +388,8 @@ export function createEngine(options: EngineOptions): Engine {
     }
 
     graph.clearDirty();
-    // A moving dash is the only thing in the engine that needs a frame nobody asked for.
-    if (counts.animatedEdges > 0) invalidate();
+    // Active camera transitions and moving dashes stop requesting frames when they settle.
+    if (counts.animatedEdges > 0 || camera.isAnimating) invalidate();
     const stats: FrameStats = {
       duration: clock.now() - t0,
       paintedNodes: counts.nodes,

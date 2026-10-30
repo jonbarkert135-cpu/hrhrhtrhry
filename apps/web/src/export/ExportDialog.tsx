@@ -31,13 +31,13 @@ export function ExportDialog({ open, onOpenChange, buildArchive, canvas }: Expor
         summary: summary.trim() === '' ? undefined : summary.trim(),
       });
       if (written === null) {
-        setError('The canvas image is not available on this device.');
+        setError('The canvas image is not available on this device');
         return;
       }
       setError(null);
       onOpenChange(false);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'The export failed.');
+      setError(cause instanceof Error ? cause.message : 'The export failed');
     }
   }
 
@@ -46,7 +46,7 @@ export function ExportDialog({ open, onOpenChange, buildArchive, canvas }: Expor
       open={open}
       onOpenChange={onOpenChange}
       title="Export"
-      description="Everything is generated on this device; nothing is uploaded."
+      description="Everything is generated on this device; nothing is uploaded"
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>

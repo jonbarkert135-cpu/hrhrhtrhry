@@ -103,14 +103,14 @@ export function CanvasHost({
       <div
         role="application"
         aria-roledescription="Research canvas"
-        aria-label="Board canvas. Drag to pan, scroll to zoom, drag on empty space to select."
+        aria-label="Board canvas. Drag to pan, scroll to zoom, drag on empty space to select"
         className="nx-canvas-stack"
       >
         <canvas
           ref={canvasRef}
           data-testid="canvas-surface"
           tabIndex={0}
-          aria-label="Board canvas. Drag to pan, scroll to zoom, drag on empty space to select."
+          aria-label="Board canvas. Drag to pan, scroll to zoom, drag on empty space to select"
           className="nx-canvas-surface"
         />
         {/* Node hosts are mounted here by the engine's overlay; React never touches its children. */}
@@ -123,7 +123,7 @@ export function CanvasHost({
           width={MINIMAP_WIDTH}
           height={MINIMAP_HEIGHT}
           hidden={!minimapVisible}
-          aria-label="Board minimap. Click or drag to move the view, scroll to zoom."
+          aria-label="Board minimap. Click or drag to move the view, scroll to zoom"
         />
         {nodeCount === 0 ? (
           <div className="nx-canvas-empty" data-testid="canvas-empty">
