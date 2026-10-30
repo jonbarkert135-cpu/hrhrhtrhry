@@ -104,13 +104,20 @@ test('the investigation tree preset previews before applying and supports one-st
   await expect(page.getByTestId('node-count')).toHaveAttribute('data-nodes', '3');
   await page.getByRole('combobox', { name: 'Zoom level' }).selectOption('fit');
   const canvas = page.getByTestId('canvas-surface');
-  const first = page.locator('[data-node-type="note"]').first();
-  await expect(first).toBeVisible();
+  // Undo restores the three overlapping notes; hit testing selects the topmost card.
+  const topmost = page.locator('[data-node-type="note"]').last();
+  await expect(topmost).toBeVisible();
+  let previousBounds = '';
+  let stableSamples = 0;
   await expect
     .poll(async () => {
       const area = await canvas.boundingBox();
-      const card = await first.boundingBox();
+      const card = await topmost.boundingBox();
+      const bounds = JSON.stringify(card);
+      stableSamples = bounds === previousBounds ? stableSamples + 1 : 0;
+      previousBounds = bounds;
       return (
+        stableSamples >= 3 &&
         area !== null &&
         card !== null &&
         card.x >= area.x &&
@@ -123,10 +130,10 @@ test('the investigation tree preset previews before applying and supports one-st
   const area = await canvas.boundingBox();
   if (area === null) throw new Error('Canvas unavailable');
   await page.mouse.click(area.x + 2, area.y + 2);
-  const card = await first.boundingBox();
+  const card = await topmost.boundingBox();
   if (card === null) throw new Error('Card unavailable');
   await page.mouse.click(card.x + card.width / 2, card.y + card.height / 2);
-  await expect(first).toHaveAttribute('data-state', 'selected');
+  await expect(topmost).toHaveAttribute('data-state', 'selected');
 });
 
 test('a browser without WebGL retains the emblem and can enter the workspace', async ({ page }) => {
