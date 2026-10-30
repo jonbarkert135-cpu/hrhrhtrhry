@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Intent } from '../src/types';
 import { gridScene, harness } from './engine.support';
@@ -67,6 +67,38 @@ describe('createEngine — frames', () => {
     expect(view.x + view.w).toBeGreaterThanOrEqual(bounds.x + bounds.w);
     expect(view.y + view.h).toBeGreaterThanOrEqual(bounds.y + bounds.h);
     expect(clock.pendingFrames).toBe(0);
+    engine.dispose();
+  });
+
+  it('keeps nodes visible across the DOM threshold and repaints once zoom settles', () => {
+    const { engine, clock } = harness(gridScene(8));
+    engine.tick();
+    engine.camera.zoomTo(0.54, CENTRE);
+    const during = engine.tick();
+    expect(during.mountedHosts + during.paintedNodes).toBeGreaterThan(0);
+    clock.flushFrame();
+    expect(clock.pendingFrames).toBe(0);
+    clock.advance(150);
+    expect(clock.pendingFrames).toBe(1);
+    clock.flushFrame();
+    const settled = engine.tick();
+    expect(settled.mountedHosts + settled.paintedNodes).toBeGreaterThan(0);
+    expect(clock.pendingFrames).toBe(0);
+    engine.dispose();
+  });
+
+  it('keeps the DOM overlay aligned with canvas world coordinates after pan and zoom', () => {
+    const { engine, overlay } = harness(gridScene(8));
+    const transform = vi.spyOn(overlay, 'setTransform');
+    engine.camera.panBy(120, -80);
+    engine.camera.zoomTo(0.8, CENTRE);
+    engine.tick();
+    const actual = transform.mock.lastCall?.[0];
+    expect(actual).toBeDefined();
+    const node = engine.query.node('n1')!;
+    const expected = engine.camera.worldToScreen({ x: node.x, y: node.y });
+    expect(actual!.x + node.x * actual!.scale).toBeCloseTo(expected.x, 6);
+    expect(actual!.y + node.y * actual!.scale).toBeCloseTo(expected.y, 6);
     engine.dispose();
   });
 

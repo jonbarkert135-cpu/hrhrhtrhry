@@ -8,10 +8,12 @@
  */
 
 import { createCamera, type Camera } from './camera/camera';
+import { worldToScreen } from './camera/coords';
 import {
   EDGE_HIT_TOL_PX,
   HANDLE_HIT_PAD_PX,
   MAX_DOM_NODES,
+  LOD_THRESHOLDS,
   PORT_BAND_PX,
   PORT_MIN_ZOOM,
   WAYPOINT_HIT_PX,
@@ -213,7 +215,7 @@ export function createEngine(options: EngineOptions): Engine {
     invalidate();
   });
 
-  const lod: LodController = createLodController(clock);
+  const lod: LodController = createLodController(clock, invalidate);
 
   const camera: Camera = createCamera({
     viewport: { width: target.size.width, height: target.size.height },
@@ -364,13 +366,19 @@ export function createEngine(options: EngineOptions): Engine {
         promotionRect.w = target.size.width / zoom;
         promotionRect.h = target.size.height / zoom;
         // The tier is already decided above; the frozen zoom keeps the gate consistent with it.
-        const plan = promotionCandidates(graph.query, cullRect(promotionRect), zoom, domBudget);
+        const plan = promotionCandidates(
+          graph.query,
+          cullRect(promotionRect),
+          Math.max(zoom, LOD_THRESHOLDS.dom),
+          domBudget,
+        );
         for (const id of plan.ids) {
           const node = previewed(graph.nodes.get(id));
           if (node !== undefined && !node.hidden) promoted.push(node);
         }
       }
-      overlay.setTransform({ x: cam.x, y: cam.y, scale: cam.zoom });
+      const origin = worldToScreen(cam, { x: 0, y: 0 });
+      overlay.setTransform({ x: origin.x, y: origin.y, scale: cam.zoom });
       overlay.sync(promoted);
       mountedHosts = promoted.length;
       if (hostSetChanged(promoted)) {
