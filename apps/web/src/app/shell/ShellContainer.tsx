@@ -94,7 +94,7 @@ export function ShellContainer({
         open={open}
         onOpenChange={setOpen}
         title="New project"
-        description="A project holds the boards, runs and files of one investigation."
+        description="A project holds the boards, runs and files of one investigation"
         submitting={create.isPending}
         {...(create.error ? { error: workspaceErrorMessage(create.error) } : {})}
         onSubmit={(name) => create.mutate({ name })}

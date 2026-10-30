@@ -17,9 +17,9 @@ export default function SignupPage() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const errors: { email?: string; password?: string } = {};
-    if (!email.includes('@')) errors.email = 'Enter an email address, like you@example.com.';
+    if (!email.includes('@')) errors.email = 'Enter an email address, like you@example.com';
     if (password.length < MIN_PASSWORD_LENGTH)
-      errors.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
+      errors.password = `Use at least ${MIN_PASSWORD_LENGTH} characters`;
     setFieldErrors(errors);
     setFormError(null);
     if (Object.keys(errors).length > 0) return;
@@ -30,7 +30,7 @@ export default function SignupPage() {
 
     // Enumeration-resistant: an existing address gets the same confirmation as a new one.
     if (result.error && result.error.status !== 422 && result.error.status !== 400) {
-      setFormError("We couldn't reach the server. Check your connection and try again.");
+      setFormError("We couldn't reach the server. Check your connection and try again");
       return;
     }
     setDone(true);
@@ -40,9 +40,10 @@ export default function SignupPage() {
     return (
       <div className="nx-auth">
         <main className="nx-auth-card nx-stack">
-          <h1>Check your email</h1>
+          <h1>Continue to sign in</h1>
           <p className="nx-muted">
-            If that address can be used, we sent a link to finish setting up your account.
+            Sign in with the details you used. Contact your workspace administrator if access is
+            unavailable
           </p>
           <p className="nx-muted">
             <Link to="/login">Back to sign in</Link>
@@ -83,7 +84,7 @@ export default function SignupPage() {
           <Field
             label="Password"
             {...(fieldErrors.password ? { error: fieldErrors.password } : {})}
-            description={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+            description={`At least ${MIN_PASSWORD_LENGTH} characters`}
             name="password"
             type="password"
             autoComplete="new-password"

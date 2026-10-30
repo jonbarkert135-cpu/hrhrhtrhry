@@ -12,7 +12,7 @@
  */
 
 import { newId } from '@nexus/domain';
-import { applyProposal } from '@nexus/integrations';
+import { applyInvestigation } from './applyInvestigation';
 import {
   graphToWorkflow,
   layoutWorkflow,
@@ -40,12 +40,20 @@ export interface WorkflowPanelProps {
   onClose: () => void;
   doc?: Y.Doc;
   boardId?: string;
+  onGraphBuilt?: (nodeIds: readonly string[]) => void;
   hostFetch?: HostFetch;
 }
 
 const MODE: ExecutionMode = 'zero-credential';
 
-export function WorkflowPanel({ open, onClose, doc, boardId, hostFetch }: WorkflowPanelProps) {
+export function WorkflowPanel({
+  open,
+  onClose,
+  doc,
+  boardId,
+  hostFetch,
+  onGraphBuilt,
+}: WorkflowPanelProps) {
   const registry = useMemo(() => createCatalogRegistry(), []);
   const runner = useQueryRun(hostFetch === undefined ? {} : { fetch: hostFetch });
 
@@ -123,7 +131,7 @@ export function WorkflowPanel({ open, onClose, doc, boardId, hostFetch }: Workfl
     }
     setIssues([]);
     setSaved(saveWorkflow(compiled.workflow));
-    setStatus(`Saved “${compiled.workflow.name}”. Run it again any time, for any input.`);
+    setStatus(`Saved “${compiled.workflow.name}”. Run it again any time, for any input`);
   }, [compiled]);
 
   const run = useCallback(() => {
@@ -155,21 +163,26 @@ export function WorkflowPanel({ open, onClose, doc, boardId, hostFetch }: Workfl
   );
 
   const apply = useCallback(
-    (selectedItemIds: string[]) => {
+    async (selectedItemIds: string[]) => {
       if (proposal === null || doc === undefined) return;
-      const outcome = applyProposal(doc, proposal, {
-        selectedItemIds,
-        conflictResolutions: {},
-        placement: 'radial',
-        newId: () => newId.board(),
-        now: new Date().toISOString(),
-      });
-      setStatus(
-        `Added ${String(outcome.createdNodeIds.length)} node(s) and ${String(outcome.createdEdgeIds.length)} edge(s).`,
-      );
-      runner.reset();
+      try {
+        const outcome = await applyInvestigation(doc, proposal, {
+          selectedItemIds,
+          conflictResolutions: {},
+          placement: 'radial',
+          newId: () => newId.board(),
+          now: new Date().toISOString(),
+        });
+        setStatus(
+          `Added ${String(outcome.createdNodeIds.length)} node(s) and ${String(outcome.createdEdgeIds.length)} edge(s).`,
+        );
+        onGraphBuilt?.(outcome.createdNodeIds);
+        runner.reset();
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : 'Unable to arrange these results');
+      }
     },
-    [proposal, doc, runner],
+    [proposal, doc, runner, onGraphBuilt],
   );
 
   if (!open) return null;
@@ -309,7 +322,7 @@ export function WorkflowPanel({ open, onClose, doc, boardId, hostFetch }: Workfl
             data-testid="workflow-delete"
             onClick={() => {
               setSaved(deleteWorkflow(source.id));
-              setStatus('Deleted.');
+              setStatus('Deleted');
             }}
           >
             Delete saved
@@ -381,13 +394,15 @@ export function WorkflowPanel({ open, onClose, doc, boardId, hostFetch }: Workfl
         <ProposalReview
           proposal={proposal}
           integrationName={name}
-          onApply={apply}
+          onApply={(ids) => {
+            void apply(ids);
+          }}
           onDiscard={runner.reset}
         />
       ) : investigation !== null ? (
         <p className="nx-muted" data-testid="workflow-no-board">
           The run finished with {String(investigation.entities.length)} entities. Open a board to
-          land them on a canvas.
+          land them on a canvas
         </p>
       ) : null}
 

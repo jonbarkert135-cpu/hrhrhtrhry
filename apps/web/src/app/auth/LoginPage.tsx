@@ -15,8 +15,8 @@ export default function LoginPage() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const errors: { email?: string; password?: string } = {};
-    if (!email.includes('@')) errors.email = 'Enter an email address, like you@example.com.';
-    if (password.length === 0) errors.password = 'Enter your password.';
+    if (!email.includes('@')) errors.email = 'Enter an email address, like you@example.com';
+    if (password.length === 0) errors.password = 'Enter your password';
     setFieldErrors(errors);
     setFormError(null);
     if (Object.keys(errors).length > 0) return;
@@ -26,9 +26,7 @@ export default function LoginPage() {
     setSubmitting(false);
 
     if (result.error) {
-      setFormError(
-        "That email and password don't match. Check them, or reset your password to sign in.",
-      );
+      setFormError("That email and password don't match. Check the address and try again");
       return;
     }
     const next = params.get('next');

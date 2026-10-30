@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 import { capabilities } from '../../mode/appMode';
 import { MetallicLink } from './MetallicLink';
 import './welcome.css';
+import { RavenSculpture } from './RavenSculpture';
+import { SiteFooter } from './SiteFooter';
 
 export default function WelcomePage() {
   const local = !capabilities.auth;
@@ -39,11 +41,11 @@ export default function WelcomePage() {
       </header>
       <section className="rvn-hero" id="welcome-content" aria-labelledby="welcome-title">
         <div className="rvn-hero-copy">
-          <p className="rvn-kicker">Research, with perspective</p>
-          <h1 id="welcome-title">Raven OSINT.</h1>
+          <p className="rvn-kicker">Private research workspace</p>
+          <h1 id="welcome-title">Raven OSINT</h1>
           <p className="rvn-hero-description">
-            Turn scattered sources into a clear investigation. A private workspace for the
-            connections that matter.
+            Keep people, notes and sources on one canvas. Review each finding before adding it to
+            your investigation
           </p>
           <div className="rvn-hero-actions">
             <MetallicLink />
@@ -54,29 +56,22 @@ export default function WelcomePage() {
           <p className="rvn-hero-assurance">
             <LockClosedIcon aria-hidden="true" />
             {local
-              ? 'Starts on your device. No account required.'
-              : 'Organization workspace. Sign in to continue.'}
+              ? 'Starts on your device. No account required'
+              : 'Organization workspace. Sign in to continue'}
           </p>
         </div>
-        <div className="rvn-hero-art" aria-hidden="true">
-          <img
-            src={`${import.meta.env.BASE_URL}brand/raven-silver-hero.webp`}
-            width={768}
-            height={768}
-            alt=""
-            fetchPriority="high"
-          />
+        <div className="rvn-hero-art">
+          <RavenSculpture />
         </div>
       </section>
       <section className="rvn-workflow" id="workflow" aria-labelledby="workflow-title">
         <header>
-          <p className="rvn-kicker">A deliberate workflow</p>
           <h2 id="workflow-title">
-            Find the thread.
+            Collect the material
             <br />
-            <span>Keep the context.</span>
+            <span>Inspect the connections</span>
           </h2>
-          <p>One canvas for the material you collect and the conclusions you choose to make.</p>
+          <p>One canvas for the material you collect and the conclusions you choose to make</p>
         </header>
         <ol className="rvn-workflow-steps">
           <li>
@@ -84,8 +79,7 @@ export default function WelcomePage() {
             <div>
               <h3>Collect the context</h3>
               <p>
-                Bring links, notes and files into the same investigation. Give each fragment a
-                place.
+                Bring links, notes and files into the same investigation. Give each fragment a place
               </p>
             </div>
           </li>
@@ -95,7 +89,7 @@ export default function WelcomePage() {
               <h3>Connect with intent</h3>
               <p>
                 Arrange people and sources on your canvas. Review proposed changes before applying
-                them.
+                them
               </p>
             </div>
           </li>
@@ -105,7 +99,7 @@ export default function WelcomePage() {
               <h3>Keep a trail</h3>
               <p>
                 Inspect provenance, revisit board versions and export your work when you need to
-                share it.
+                share it
               </p>
             </div>
           </li>
@@ -121,46 +115,40 @@ export default function WelcomePage() {
           width={1440}
           height={900}
           loading="lazy"
-          alt="Raven canvas showing a fictional person, analyst notes and their connections."
+          alt="Raven canvas showing a fictional person, analyst notes and their connections"
         />
       </section>
       <section className="rvn-principles" id="principles" aria-labelledby="principles-title">
         <h2 id="principles-title">
-          Your work.
+          On your device
           <br />
-          <span>Your judgement.</span>
+          <span>Under your control</span>
         </h2>
         <dl>
           <div>
             <dt>Local first</dt>
             <dd>
               The default workspace runs on your device, with no account or external service
-              required.
+              required
             </dd>
           </div>
           <div>
             <dt>Human decisions</dt>
             <dd>
               A suggestion is a starting point. You choose which changes become part of your
-              investigation.
+              investigation
             </dd>
           </div>
           <div>
             <dt>Traceable context</dt>
             <dd>
               Keep sources alongside your work and preserve conflicting claims instead of silently
-              merging identities.
+              merging identities
             </dd>
           </div>
         </dl>
       </section>
-      <footer className="rvn-welcome-footer">
-        <span>Raven OSINT</span>
-        <span>A workspace for deliberate research.</span>
-        <a href="#top">
-          Back to top <ArrowRightIcon aria-hidden="true" />
-        </a>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

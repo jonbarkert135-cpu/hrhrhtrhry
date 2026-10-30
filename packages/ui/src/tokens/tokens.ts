@@ -82,10 +82,10 @@ export const tokens = {
   font: {
     display:
       "'Manrope Variable', 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    sans: "'Inter Tight Variable', 'InterVariable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    sans: "'Manrope Variable', 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     mono: "'JetBrains Mono Variable', 'JetBrainsMonoVariable', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono', monospace",
   },
-  weight: { regular: '400', medium: '500', semibold: '600', bold: '680' },
+  weight: { regular: '450', medium: '550', semibold: '650', bold: '750' },
   shadow: {
     '0': 'none',
     '1': '0 1px 2px rgb(0 0 0 / 0.28)',

@@ -24,6 +24,8 @@ export function createNodeStore(doc: Y.Doc): NodeStore {
   const snapshots = new Map<string, BoardNode>();
   let ids: string[] = listNodes(doc).map((node) => node.id);
 
+  let knownIds = new Set(ids);
+
   const refresh = (id: string): void => {
     const node = getNode(doc, id);
     if (node === undefined) snapshots.delete(id);
@@ -41,11 +43,16 @@ export function createNodeStore(doc: Y.Doc): NodeStore {
       const set = listeners.get(id);
       if (set !== undefined) for (const listener of set) listener();
     }
-    if (change.nodes.upserted.length > 0 || change.nodes.removed.length > 0) {
+    // Editing content must not deserialize every node just to discover the id list is unchanged
+    if (
+      change.nodes.upserted.some((id) => !knownIds.has(id)) ||
+      change.nodes.removed.some((id) => knownIds.has(id))
+    ) {
       const next = listNodes(doc).map((node) => node.id);
       const changed = next.length !== ids.length || next.some((id, index) => id !== ids[index]);
       if (changed) {
         ids = next;
+        knownIds = new Set(next);
         for (const listener of idListeners) listener();
       }
     }
@@ -89,7 +96,10 @@ export function createNodeStore(doc: Y.Doc): NodeStore {
     getIds() {
       if (stop === undefined) {
         const next = listNodes(doc).map((node) => node.id);
-        if (next.length !== ids.length || next.some((id, index) => id !== ids[index])) ids = next;
+        if (next.length !== ids.length || next.some((id, index) => id !== ids[index])) {
+          ids = next;
+          knownIds = new Set(next);
+        }
       }
       return ids;
     },

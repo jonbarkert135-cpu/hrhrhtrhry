@@ -65,7 +65,7 @@ export function ProposalReview({
       <section aria-label="Results" data-testid="proposal-review">
         <p data-testid="proposal-empty">
           {integrationName} found nothing to add. The target already matches what is on the board,
-          so there is no change to propose — open the run log to see what it checked.
+          so there is no change to propose — open the run log to see what it checked
         </p>
         <Button variant="secondary" onClick={onDiscard}>
           Close

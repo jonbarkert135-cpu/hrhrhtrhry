@@ -94,7 +94,7 @@ export function RepositoryAnalysisSection({ repositoryUrl }: RepositoryAnalysisS
       () => {
         setRequestedAt(null);
         setRequestError(
-          'The analysis did not come back in time. It may still be running — try again in a minute, or open the repository and record what you find by hand.',
+          'The analysis did not come back in time. It may still be running — try again in a minute, or open the repository and record what you find by hand',
         );
       },
       Math.max(0, ANALYSIS_POLL_TIMEOUT_MS - elapsed),
@@ -133,7 +133,7 @@ export function RepositoryAnalysisSection({ repositoryUrl }: RepositoryAnalysisS
             : {
                 title: 'The analysis could not be loaded',
                 detail:
-                  'The repository analysis is not available right now. Try again, open the repository on its host, or record what you find by hand.',
+                  'The repository analysis is not available right now. Try again, open the repository on its host, or record what you find by hand',
               }
       }
       onRetry={() => {

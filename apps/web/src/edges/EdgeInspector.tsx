@@ -76,7 +76,7 @@ export function EdgeInspector({
           <h2>Relationship deleted</h2>
         </header>
         <p className="nx-inspector-empty">
-          This relationship is gone. Press ⌘Z to bring it back, or select another one.
+          This relationship is gone. Press ⌘Z to bring it back, or select another one
         </p>
       </aside>
     );
@@ -210,7 +210,7 @@ export function EdgeInspector({
         <h3>Shape</h3>
         <p className="nx-card-meta" data-testid="edge-waypoints">
           {edge.waypoints.length === 0
-            ? 'No waypoints. Double-click the line to add one, drag it to move it, right-click it to remove it.'
+            ? 'No waypoints. Double-click the line to add one, drag it to move it, right-click it to remove it'
             : `${String(edge.waypoints.length)} waypoint${edge.waypoints.length === 1 ? '' : 's'}.`}
         </p>
         {hiddenWaypoints === 0 ? null : (
@@ -219,7 +219,7 @@ export function EdgeInspector({
               ? 'One waypoint sits'
               : `${String(hiddenWaypoints)} waypoints sit`}{' '}
             inside a card, so part of the line is hidden behind it. Drag it out, or reset the
-            routing.
+            routing
           </p>
         )}
         {edge.waypoints.length === 0 ? null : (

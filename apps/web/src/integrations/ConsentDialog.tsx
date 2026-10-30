@@ -24,8 +24,8 @@ export interface ConsentDialogProps {
 /** What leaves the device — the honest answer, which for a builtin is "nothing". */
 export function dataLeavingCopy(integration: IntegrationSummary): string {
   return integration.executionKind === 'builtin'
-    ? 'Nothing leaves this deployment: this tool runs locally, in the sandbox.'
-    : 'This tool contacts third-party services on your behalf with the inputs shown above.';
+    ? 'Nothing leaves this deployment: this tool runs locally, in the sandbox'
+    : 'This tool contacts third-party services on your behalf with the inputs shown above';
 }
 
 export function ConsentDialog({

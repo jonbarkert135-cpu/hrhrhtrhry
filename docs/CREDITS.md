@@ -5,15 +5,15 @@ what each thing is for. Nothing here may be removed from a distribution: several
 require the notice to travel with the software.
 
 The product goal document requires a **Credits / Open Source** surface inside the application.
-That screen is not built yet; this file is its source of truth and its interim substitute.
+The in-application page is `/legal/credits`, with self-hosted OFL notices for the active fonts. This file records the broader dependency context.
 
 ## Fonts
 
-| Family         | Licence     | Where it is used                                         | Upstream                                   |
-| -------------- | ----------- | -------------------------------------------------------- | ------------------------------------------ |
-| Inter Tight    | SIL OFL 1.1 | body and interface text (`--nx-font-sans`)               | https://github.com/rsms/inter              |
-| Manrope        | SIL OFL 1.1 | display: brand, headings, eyebrows (`--nx-font-display`) | https://github.com/sharanda/manrope        |
-| JetBrains Mono | SIL OFL 1.1 | code, hashes, selectors (`--nx-font-mono`)               | https://github.com/JetBrains/JetBrainsMono |
+| Family         | Licence     | Where it is used                                               | Upstream                                   |
+| -------------- | ----------- | -------------------------------------------------------------- | ------------------------------------------ |
+| Inter Tight    | SIL OFL 1.1 | legacy builds; no longer loaded by the default UI              | https://github.com/rsms/inter              |
+| Manrope        | SIL OFL 1.1 | headings and interface (`--nx-font-display`, `--nx-font-sans`) | https://github.com/sharanda/manrope        |
+| JetBrains Mono | SIL OFL 1.1 | code, hashes, selectors (`--nx-font-mono`)                     | https://github.com/JetBrains/JetBrainsMono |
 
 All three are self-hosted through Fontsource (`@fontsource-variable/*`), never fetched from a CDN:
 the default build must work offline (N2). The OFL text ships inside each package under
@@ -30,4 +30,4 @@ RDAP (RFC 9224) — all keyless public services used as documented.
 ## Libraries
 
 Runtime and build dependencies are declared in the `package.json` of each workspace package and
-pinned in `pnpm-lock.yaml`; their licences are checked by the `audit` job in CI.
+pinned in `pnpm-lock.yaml`; security advisories are checked by the `audit` job in CI. Each dependency retains its own licence terms.

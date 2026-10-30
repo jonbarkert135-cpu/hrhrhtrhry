@@ -38,7 +38,7 @@ export function LayersPanel({ open, doc, context, onClose, onSelect, onNotice }:
 
       {rows.length === 0 ? (
         <p className="nx-muted" data-testid="layers-empty">
-          The board is empty. Add a card and it will appear here.
+          The board is empty. Add a card and it will appear here
         </p>
       ) : (
         <ul className="nx-layers-list">

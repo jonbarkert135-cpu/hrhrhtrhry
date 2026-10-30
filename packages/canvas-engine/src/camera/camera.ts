@@ -39,6 +39,8 @@ export interface CameraOptions {
   clock: { now(): number };
   prefersReducedMotion: boolean;
   onChange?: (state: Readonly<CameraState>, cause: CameraCause) => void;
+  /** Wake an idle frame scheduler before the first animation step changes the camera. */
+  onAnimationStart?: () => void;
   /** Scene bounds resolver for `fitAll` and `clampToBounds`; absent scene → `reset()`. */
   sceneBounds?: () => Rect | null;
   /** Entity bounds resolver for `focus`; unknown ids are ignored. */
@@ -142,6 +144,7 @@ export function createCamera(options: CameraOptions): Camera {
       startedAt: clock.now(),
       cause,
     };
+    options.onAnimationStart?.();
   }
 
   function anchoredZoom(zoom: number, anchorScreen: Vec2, minZoom: number): CameraState {

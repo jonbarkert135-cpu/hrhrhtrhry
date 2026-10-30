@@ -55,7 +55,7 @@ export function GroupsPanel({
 
       {groups.length === 0 ? (
         <p className="nx-muted" data-testid="groups-empty">
-          No groups yet. Select two or more cards and press Ctrl+G to frame them together.
+          No groups yet. Select two or more cards and press Ctrl+G to frame them together
         </p>
       ) : (
         <ul className="nx-groups-list">

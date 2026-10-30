@@ -110,11 +110,7 @@ function NodeCardImpl({
           </span>
         ) : null}
         {state === 'stale' ? (
-          <span
-            className="nx-chip"
-            data-kind="stale"
-            title="Data captured a while ago. Refresh it."
-          >
+          <span className="nx-chip" data-kind="stale" title="Data captured a while ago. Refresh it">
             Stale
           </span>
         ) : null}

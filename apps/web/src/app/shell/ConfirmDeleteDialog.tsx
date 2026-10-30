@@ -41,7 +41,7 @@ export function ConfirmDeleteDialog({
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (typed !== name) {
-      setFieldError(`Type "${name}" exactly to confirm.`);
+      setFieldError(`Type "${name}" exactly to confirm`);
       return;
     }
     setFieldError(undefined);
@@ -53,7 +53,7 @@ export function ConfirmDeleteDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={`Delete this ${kind}?`}
-      description={`This cannot be undone with Ctrl/Cmd+Z. It moves to Recently deleted for 30 days, then is purged for good.`}
+      description={`This removes it from the workspace. Ctrl/Cmd+Z does not restore a deleted project or board; retention and backups depend on the deployment`}
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={submitting}>

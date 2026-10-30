@@ -76,13 +76,13 @@ export function RunPanel({
       {state === 'partial' ? (
         <Banner kind="warn" title="Run ended early">
           Some of the work finished before the run stopped. Import what was collected, or run it
-          again.
+          again
         </Banner>
       ) : null}
 
       {state === 'cancelled' ? (
         <Banner kind="info" title="Run cancelled">
-          You stopped this run, so nothing was imported. Start it again whenever you want.
+          You stopped this run, so nothing was imported. Start it again whenever you want
         </Banner>
       ) : null}
 
@@ -95,7 +95,7 @@ export function RunPanel({
       {state === 'succeeded' && itemsFound === 0 ? (
         <Banner kind="info" title="No results found">
           {integrationName} ran successfully but found nothing new to add for these inputs. Try a
-          different input, or open the run log to see what it checked.
+          different input, or open the run log to see what it checked
         </Banner>
       ) : null}
 

@@ -36,7 +36,7 @@ describe('RunConsole', () => {
 
   it('says so when nothing has run yet', () => {
     render(<RunConsole lines={[]} open onToggle={vi.fn()} />);
-    expect(screen.getByRole('log')).toHaveTextContent('Nothing has run yet.');
+    expect(screen.getByRole('log')).toHaveTextContent('Nothing has run yet');
   });
 
   it('reports a live run on the handle', () => {

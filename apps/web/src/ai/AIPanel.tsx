@@ -47,7 +47,7 @@ export function AIPanel({
       try {
         setResult(await runAIOnDoc(doc, id, { boardId, selectedIds }));
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : 'The AI run failed.');
+        setError(cause instanceof Error ? cause.message : 'The AI run failed');
       }
     },
     [doc, boardId, selectedIds],
@@ -81,7 +81,7 @@ export function AIPanel({
 
       {!hasProvider ? (
         <p>
-          No AI endpoint is configured, so only the capabilities that need no model are available.
+          No AI endpoint is configured, so only the capabilities that need no model are available
         </p>
       ) : null}
 

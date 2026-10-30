@@ -49,7 +49,7 @@ export function VersionHistory({
         setSnapshots(records);
         setError(null);
       })
-      .catch(() => setError('Version history could not be read from this device.'));
+      .catch(() => setError('Version history could not be read from this device'));
   }, [store, boardId]);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export function VersionHistory({
       open={open}
       onOpenChange={onOpenChange}
       title="Version history"
-      description="Local snapshots of this board. Restoring adds a new step — it never rewrites history."
+      description="Local snapshots of this board. Restoring adds a new step — it never rewrites history"
       footer={
         <Button variant="secondary" onClick={() => onOpenChange(false)}>
           Close
@@ -75,12 +75,12 @@ export function VersionHistory({
       ) : null}
       {previewingId !== null ? (
         <Banner kind="info" title="You are previewing a version">
-          The canvas shows a past version read-only. Restore it, or close this panel to go back.
+          The canvas shows a past version read-only. Restore it, or close this panel to go back
         </Banner>
       ) : null}
       {snapshots.length === 0 && error === null ? (
         <p className="nx-muted">
-          No snapshots yet. One is written automatically every 200 changes or every five minutes.
+          No snapshots yet. One is written automatically every 200 changes or every five minutes
         </p>
       ) : null}
       <ul className="nx-stack" data-testid="version-list">

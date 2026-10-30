@@ -66,7 +66,7 @@ export function PresentationMode({
         <div className="nx-presentation-slide" data-testid="presentation-empty">
           <h2>Nothing to present</h2>
           <p className="nx-muted">
-            Select the nodes that tell the story, or star them, then present.
+            Select the nodes that tell the story, or star them, then present
           </p>
           <Button onClick={onClose}>Close</Button>
         </div>

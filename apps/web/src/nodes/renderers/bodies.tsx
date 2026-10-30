@@ -97,7 +97,7 @@ function NoteBody({ node, detailed }: NodeBodyProps) {
       {plain === '' ? (
         <span className="nx-card-placeholder">What did you find?</span>
       ) : (
-        <p className="nx-card-text" data-clamp={detailed ? '8' : '3'}>
+        <p className="nx-card-text" data-clamp={detailed ? '8' : '2'}>
           {plain}
         </p>
       )}

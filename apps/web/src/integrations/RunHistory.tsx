@@ -67,7 +67,7 @@ export function RunHistory({ runs, integrations, onViewLog, onRerun, onDiff }: R
       {runs.length === 0 ? (
         <p data-testid="history-empty">
           No tool has run on this board yet. Select a node and choose “Run integration…” to start
-          one — every run you make is listed here with its log.
+          one — every run you make is listed here with its log
         </p>
       ) : null}
 

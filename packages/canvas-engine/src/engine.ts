@@ -220,6 +220,7 @@ export function createEngine(options: EngineOptions): Engine {
     clock,
     prefersReducedMotion: options.prefersReducedMotion ?? false,
     sceneBounds: () => (graph.query.nodeCount === 0 ? null : graph.query.sceneBounds),
+    onAnimationStart: invalidate,
     entityBounds: (id: EntityId) => {
       const n = graph.query.node(id);
       return n ? { x: n.x, y: n.y, w: n.w, h: n.h } : null;
@@ -379,8 +380,8 @@ export function createEngine(options: EngineOptions): Engine {
     }
 
     graph.clearDirty();
-    // A moving dash is the only thing in the engine that needs a frame nobody asked for.
-    if (counts.animatedEdges > 0) invalidate();
+    // Active camera transitions and moving dashes stop requesting frames when they settle.
+    if (counts.animatedEdges > 0 || camera.isAnimating) invalidate();
     const stats: FrameStats = {
       duration: clock.now() - t0,
       paintedNodes: counts.nodes,

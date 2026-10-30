@@ -52,7 +52,7 @@ export function CreateDialog({
     event.preventDefault();
     const value = name.trim();
     if (value === '') {
-      setFieldError('Enter a name so you can find this again.');
+      setFieldError('Enter a name so you can find this again');
       return;
     }
     setFieldError(undefined);

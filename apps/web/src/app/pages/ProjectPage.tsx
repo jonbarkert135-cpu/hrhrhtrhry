@@ -49,7 +49,7 @@ export default function ProjectPage() {
   if (!project) {
     return (
       <Banner kind="warn" title="That project no longer exists">
-        It may have been deleted or moved. Pick another project from the rail.
+        It may have been deleted or moved. Pick another project from the rail
       </Banner>
     );
   }
@@ -64,8 +64,8 @@ export default function ProjectPage() {
           <h2 className="nx-page-title">{project.name}</h2>
           <p className="nx-page-sub">
             {items.length === 0
-              ? 'A clear starting point for your next investigation.'
-              : `${String(items.length)} ${items.length === 1 ? 'board' : 'boards'} to collect, connect and investigate.`}
+              ? 'A clear starting point for your next investigation'
+              : `${String(items.length)} ${items.length === 1 ? 'board' : 'boards'} to collect, connect and investigate`}
           </p>
         </div>
         {items.length > 0 ? (
@@ -91,8 +91,8 @@ export default function ProjectPage() {
             <p className="nx-empty-body">
               A board is one canvas: notes, links and files you connect while you work. Everything
               {capabilities.auth
-                ? 'belongs to this organization workspace.'
-                : 'stays on this device until you choose otherwise.'}
+                ? 'belongs to this organization workspace'
+                : 'stays on this device until you choose otherwise'}
             </p>
             <Button
               variant="primary"
@@ -111,8 +111,8 @@ export default function ProjectPage() {
       <p className="nx-project-privacy">
         <LockClosedIcon aria-hidden="true" />
         {capabilities.auth
-          ? 'Access follows your organization permissions.'
-          : 'Local workspace. No account or external service required.'}
+          ? 'Access follows your organization permissions'
+          : 'Local workspace. No account or external service required'}
       </p>
       <NewBoardDialog
         open={open}

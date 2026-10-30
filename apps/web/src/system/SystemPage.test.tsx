@@ -138,6 +138,6 @@ describe('SystemPage', () => {
 
     // No engine in the shipped catalogue is external or unsupported today; the class still shows,
     // so the reader can see the answer is "none" rather than "not measured".
-    expect(screen.getByTestId('compat-unsupported')).toHaveTextContent('None.');
+    expect(screen.getByTestId('compat-unsupported')).toHaveTextContent('None');
   });
 });

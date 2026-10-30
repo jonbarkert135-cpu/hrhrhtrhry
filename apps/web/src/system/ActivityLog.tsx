@@ -43,7 +43,7 @@ export function ActivityLog() {
       </div>
       {shown.length === 0 ? (
         <p className="nx-muted" data-testid="activity-empty">
-          Nothing has happened in this session yet.
+          Nothing has happened in this session yet
         </p>
       ) : (
         <ul className="nx-activity">

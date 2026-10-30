@@ -44,7 +44,7 @@ export function RunDiffSheet({
           <h4>No longer reported ({String(diff.missing.length)})</h4>
           <p data-testid="run-diff-caution">
             A result the newer run did not report is not proof that it is gone — the check may
-            simply have failed. Nothing is removed from your board; review it yourself.
+            simply have failed. Nothing is removed from your board; review it yourself
           </p>
           <ul>
             {diff.missing.map((row) => (

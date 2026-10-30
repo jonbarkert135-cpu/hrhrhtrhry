@@ -22,12 +22,12 @@ export function describePayload(text: string): string {
   switch (detection.kind) {
     case 'urls':
       return detection.urls.length === 1
-        ? 'Adds one website node.'
-        : `Adds ${String(detection.urls.length)} website nodes.`;
+        ? 'Adds one website node'
+        : `Adds ${String(detection.urls.length)} website nodes`;
     case 'text':
-      return detection.text.length <= 280 ? 'Adds one text node.' : 'Adds one note.';
+      return detection.text.length <= 280 ? 'Adds one text node' : 'Adds one note';
     default:
-      return 'Paste a link, several links, or any text.';
+      return 'Paste a link, several links, or any text';
   }
 }
 
@@ -85,7 +85,7 @@ export function QuickAdd({ onNote, onPerson, onCapture }: QuickAddProps) {
           open={open}
           onOpenChange={setOpen}
           title="Add to board"
-          description="Paste a link or any text. The right node type is chosen for you."
+          description="Paste a link or any text. The right node type is chosen for you"
           footer={
             <>
               <Button variant="secondary" onClick={() => setOpen(false)}>

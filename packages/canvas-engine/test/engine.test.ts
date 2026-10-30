@@ -50,6 +50,26 @@ describe('createEngine — frames', () => {
     expect(clock.pendingFrames).toBe(0);
   });
 
+  it('starts Fit from idle, completes the animation and returns to idle', () => {
+    const { engine, clock } = harness(gridScene(100, 10));
+    clock.flushFrame();
+    expect(clock.pendingFrames).toBe(0);
+    engine.camera.fitAll();
+    expect(clock.pendingFrames).toBe(1);
+    for (let frame = 0; frame < 30; frame += 1) {
+      clock.advance(16);
+      clock.flushFrame();
+    }
+    const view = engine.camera.viewportWorld;
+    const bounds = engine.query.sceneBounds;
+    expect(engine.camera.state.zoom).toBeLessThan(1);
+    expect(view.x).toBeLessThanOrEqual(bounds.x);
+    expect(view.x + view.w).toBeGreaterThanOrEqual(bounds.x + bounds.w);
+    expect(view.y + view.h).toBeGreaterThanOrEqual(bounds.y + bounds.h);
+    expect(clock.pendingFrames).toBe(0);
+    engine.dispose();
+  });
+
   it('pauses on a hidden tab and resumes with a single frame, without replaying', () => {
     const { engine, clock } = harness(gridScene(4));
     let frames = 0;

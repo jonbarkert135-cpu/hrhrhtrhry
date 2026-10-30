@@ -27,8 +27,8 @@ describe('LoginPage', () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(screen.getByText('Enter an email address, like you@example.com.')).toBeInTheDocument();
-    expect(screen.getByText('Enter your password.')).toBeInTheDocument();
+    expect(screen.getByText('Enter an email address, like you@example.com')).toBeInTheDocument();
+    expect(screen.getByText('Enter your password')).toBeInTheDocument();
     expect(signInEmail).not.toHaveBeenCalled();
   });
 

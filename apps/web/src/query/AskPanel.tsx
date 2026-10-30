@@ -8,7 +8,7 @@
  */
 
 import { newId } from '@nexus/domain';
-import { applyProposal } from '@nexus/integrations';
+import { applyInvestigation } from './applyInvestigation';
 import { planQuery } from '@nexus/query-engine';
 import {
   createCatalogRegistry,
@@ -37,6 +37,7 @@ export interface AskPanelProps {
   /** Absent in surfaces with no board (the panel then plans but cannot land results). */
   doc?: Y.Doc;
   boardId?: string;
+  onGraphBuilt?: (nodeIds: readonly string[]) => void;
   onUndo?: () => void;
   /** Injected by tests and by deployments that route provider traffic through the egress proxy. */
   hostFetch?: HostFetch;
@@ -60,7 +61,15 @@ const REASON_LABELS: Record<string, string> = {
   'over-capacity': 'host at capacity',
 };
 
-export function AskPanel({ open, onClose, doc, boardId, onUndo, hostFetch }: AskPanelProps) {
+export function AskPanel({
+  open,
+  onClose,
+  doc,
+  boardId,
+  onUndo,
+  hostFetch,
+  onGraphBuilt,
+}: AskPanelProps) {
   const [raw, setRaw] = useState('');
   const [override, setOverride] = useState<EntityKind | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -113,21 +122,26 @@ export function AskPanel({ open, onClose, doc, boardId, onUndo, hostFetch }: Ask
   );
 
   const apply = useCallback(
-    (selectedItemIds: string[]) => {
+    async (selectedItemIds: string[]) => {
       if (proposal === null || doc === undefined) return;
-      const outcome = applyProposal(doc, proposal, {
-        selectedItemIds,
-        conflictResolutions: {},
-        placement: 'radial',
-        newId: () => newId.board(),
-        now: new Date().toISOString(),
-      });
-      const summary = `Added ${String(outcome.createdNodeIds.length)} node(s) and ${String(outcome.createdEdgeIds.length)} edge(s).`;
-      logActivity('import', summary);
-      setApplied(summary);
-      runner.reset();
+      try {
+        const outcome = await applyInvestigation(doc, proposal, {
+          selectedItemIds,
+          conflictResolutions: {},
+          placement: 'radial',
+          newId: () => newId.board(),
+          now: new Date().toISOString(),
+        });
+        const summary = `Added ${String(outcome.createdNodeIds.length)} node(s) and ${String(outcome.createdEdgeIds.length)} edge(s).`;
+        logActivity('import', summary);
+        setApplied(summary);
+        onGraphBuilt?.(outcome.createdNodeIds);
+        runner.reset();
+      } catch (error) {
+        setApplied(error instanceof Error ? error.message : 'Unable to arrange these results');
+      }
     },
-    [proposal, doc, runner],
+    [proposal, doc, runner, onGraphBuilt],
   );
 
   // §23 Build Graph: the kept results become nodes, edges and a layout in one apply — the same
@@ -158,7 +172,7 @@ export function AskPanel({ open, onClose, doc, boardId, onUndo, hostFetch }: Ask
           );
         })
         .map((item) => item.id);
-      apply(itemIds);
+      void apply(itemIds);
     },
     [proposal, investigation, apply],
   );
@@ -211,15 +225,15 @@ export function AskPanel({ open, onClose, doc, boardId, onUndo, hostFetch }: Ask
 
       {result.ambiguous ? (
         <p className="nx-muted" data-testid="ask-ambiguous">
-          Two readings are about equally likely — pick the one you meant.
+          Two readings are about equally likely — pick the one you meant
         </p>
       ) : null}
 
       {raw.trim() === '' ? (
-        <p className="nx-muted">Nothing runs until you accept a plan.</p>
+        <p className="nx-muted">Nothing runs until you accept a plan</p>
       ) : steps.length === 0 ? (
         <p className="nx-muted" data-testid="ask-empty">
-          Nothing can run for this input in the current mode.
+          Nothing can run for this input in the current mode
         </p>
       ) : (
         <ol className="nx-ask-plan" data-testid="ask-plan">
@@ -366,13 +380,15 @@ export function AskPanel({ open, onClose, doc, boardId, onUndo, hostFetch }: Ask
         <ProposalReview
           proposal={proposal}
           integrationName="Ask Raven"
-          onApply={apply}
+          onApply={(ids) => {
+            void apply(ids);
+          }}
           onDiscard={runner.reset}
         />
       ) : investigation !== null ? (
         <p className="nx-muted" data-testid="ask-no-board">
           The run finished with {String(investigation.entities.length)} entities. Open a board to
-          land them on a canvas.
+          land them on a canvas
         </p>
       ) : null}
 

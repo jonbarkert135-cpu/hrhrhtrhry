@@ -28,7 +28,7 @@ describe('ConfirmDeleteDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(onConfirm).not.toHaveBeenCalled();
-    expect(screen.getByText('Type "Alpha" exactly to confirm.')).toBeInTheDocument();
+    expect(screen.getByText('Type "Alpha" exactly to confirm')).toBeInTheDocument();
   });
 
   it('confirms once the exact name is retyped', () => {
@@ -66,7 +66,7 @@ describe('ConfirmDeleteDialog', () => {
       target: { value: 'wrong' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(screen.getByText('Type "Alpha" exactly to confirm.')).toBeInTheDocument();
+    expect(screen.getByText('Type "Alpha" exactly to confirm')).toBeInTheDocument();
 
     rerender(
       <ConfirmDeleteDialog
@@ -87,7 +87,7 @@ describe('ConfirmDeleteDialog', () => {
       />,
     );
 
-    expect(screen.queryByText('Type "Alpha" exactly to confirm.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Type "Alpha" exactly to confirm')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Type "Alpha" to confirm')).toHaveValue('');
   });
 

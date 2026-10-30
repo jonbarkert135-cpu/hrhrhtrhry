@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi, afterEach } from 'vitest';
@@ -22,15 +22,23 @@ describe('public Raven welcome page', () => {
     });
     vi.stubGlobal('fetch', forbidden);
     renderWelcome();
-    expect(screen.getByRole('heading', { level: 1, name: 'Raven OSINT.' })).toBeInTheDocument();
-    expect(screen.getByText('Starts on your device. No account required.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Raven OSINT' })).toBeInTheDocument();
+    expect(screen.getByText('Starts on your device. No account required')).toBeInTheDocument();
     expect(forbidden).not.toHaveBeenCalled();
-    expect(screen.getByRole('link', { name: 'Workflow' })).toHaveAttribute('href', '#workflow');
+    expect(
+      within(screen.getByRole('navigation', { name: 'Welcome navigation' })).getByRole('link', {
+        name: 'Workflow',
+      }),
+    ).toHaveAttribute('href', '#workflow');
     expect(screen.getByRole('link', { name: 'Principles' })).toHaveAttribute('href', '#principles');
   });
   it('opens the actual workspace route from the metallic CTA', async () => {
     renderWelcome();
-    await userEvent.click(screen.getByRole('link', { name: 'Open workspace' }));
+    await userEvent.click(
+      within(screen.getByRole('region', { name: 'Raven OSINT' })).getByRole('link', {
+        name: 'Open workspace',
+      }),
+    );
     expect(await screen.findByRole('heading', { name: 'Workspace opened' })).toBeInTheDocument();
   });
 });

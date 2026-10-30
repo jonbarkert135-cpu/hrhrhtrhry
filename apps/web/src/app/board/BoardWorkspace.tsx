@@ -11,6 +11,7 @@ import {
   deleteNode,
   duplicateNode,
   exportBoard,
+  getNode,
   importBoard,
   listEdges,
   listNodes,
@@ -458,10 +459,33 @@ export function BoardWorkspace() {
     return () => window.removeEventListener('keydown', onKey);
   }, [onGroup, onUngroup, openLayers, openGroups]);
 
+  const showImportedGraph = useCallback(
+    (ids: readonly string[]) => {
+      const nodes = ids.flatMap((id) => {
+        const node = getNode(doc, id);
+        return node === undefined ? [] : [node];
+      });
+      if (engine === null || nodes.length === 0) return;
+      const x = Math.min(...nodes.map((node) => node.x));
+      const y = Math.min(...nodes.map((node) => node.y));
+      const right = Math.max(...nodes.map((node) => node.x + node.w));
+      const bottom = Math.max(...nodes.map((node) => node.y + node.h));
+      engine.camera.fit(
+        { x, y, w: right - x, h: bottom - y },
+        {
+          padding: 48,
+          maxZoom: 1,
+          animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        },
+      );
+    },
+    [doc, engine],
+  );
+
   const addManualNode = useCallback(
     (create: typeof createNoteNode) => {
       if (nodeBudget(doc).blocked) {
-        setNotice('This board is full. Split the investigation into a second board.');
+        setNotice('This board is full. Split the investigation into a second board');
         return;
       }
       // Drop the note in the middle of what the user is looking at, not at the world origin.
@@ -615,7 +639,7 @@ export function BoardWorkspace() {
       });
       setImportOpen(false);
       setNotice(
-        `Imported ${String(report.created.nodes)} nodes and ${String(report.created.edges)} edges.` +
+        `Imported ${String(report.created.nodes)} nodes and ${String(report.created.edges)} edges` +
           (report.warnings.length > 0 ? ` ${report.warnings[0] ?? ''}` : ''),
       );
     },
@@ -629,7 +653,7 @@ export function BoardWorkspace() {
         restoreSnapshot(doc, record);
         setPreviewing(null);
         setHistoryOpen(false);
-        setNotice('Version restored. Press ⌘Z to undo the restore.');
+        setNotice('Version restored. Press ⌘Z to undo the restore');
       });
     },
     [doc, snapshotStore],
@@ -709,7 +733,7 @@ export function BoardWorkspace() {
       ) : null}
       {budgetWarning ? (
         <Banner kind="warn" title="This board is getting large">
-          Past {String(NODE_SOFT_LIMIT)} nodes the canvas slows down. Consider splitting it.
+          Past {String(NODE_SOFT_LIMIT)} nodes the canvas slows down. Consider splitting it
         </Banner>
       ) : null}
       {notice !== null ? (
@@ -893,6 +917,7 @@ export function BoardWorkspace() {
 
       <AskPanel
         open={askOpen}
+        onGraphBuilt={showImportedGraph}
         onClose={() => setAskOpen(false)}
         doc={doc}
         boardId={boardId}
@@ -901,6 +926,7 @@ export function BoardWorkspace() {
 
       <WorkflowPanel
         open={workflowsOpen}
+        onGraphBuilt={showImportedGraph}
         onClose={() => setWorkflowsOpen(false)}
         doc={doc}
         boardId={boardId}
@@ -930,7 +956,7 @@ export function BoardWorkspace() {
         history={history}
         selectedIds={selectedIds}
         onApplied={(count) =>
-          setNotice(`Auto arrange moved ${String(count)} nodes. Press ⌘Z to undo it in one step.`)
+          setNotice(`Auto arrange moved ${String(count)} nodes. Press ⌘Z to undo it in one step`)
         }
       />
     </section>

@@ -94,8 +94,8 @@ export function BoardDocProvider({
         onFallback: (backend) =>
           setStorageWarning(
             backend === 'memory'
-              ? 'Local file storage is unavailable, so attachments live in memory only. Export the board before closing this tab.'
-              : 'This browser has no OPFS support; attachments are stored in IndexedDB instead.',
+              ? 'Local file storage is unavailable, so attachments live in memory only. Export the board before closing this tab'
+              : 'This browser has no OPFS support; attachments are stored in IndexedDB instead',
           ),
       });
 

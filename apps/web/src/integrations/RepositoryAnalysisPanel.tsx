@@ -125,7 +125,7 @@ export function RepositoryAnalysisPanel({
       {analyzing ? (
         <p className="nx-muted" role="status" data-testid="analysis-running">
           Analyzing this repository — reading its layout, entry points and dependencies. The result
-          appears here as soon as it is ready; you can keep working in the meantime.
+          appears here as soon as it is ready; you can keep working in the meantime
         </p>
       ) : null}
 
@@ -148,7 +148,7 @@ export function RepositoryAnalysisPanel({
         analyzing ? null : (
           <p className="nx-muted" data-testid="analysis-empty">
             This repository has not been analyzed yet. Run the analysis to see its languages, entry
-            points and integration options.
+            points and integration options
           </p>
         )
       ) : (
