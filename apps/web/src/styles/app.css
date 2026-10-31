@@ -89,6 +89,7 @@
   }
 
   .nx-rail {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--nx-space-5);
@@ -415,6 +416,7 @@
   }
 
   .nx-board-bar {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--nx-space-3);
@@ -529,26 +531,6 @@
     pointer-events: none;
   }
 
-  /* Own repaint budget, own surface (03_UX §6: 200×140, bottom-right). */
-  .nx-minimap {
-    position: absolute;
-    right: var(--nx-space-4);
-    /* Above the two bottom-right clusters (zoom, bundling) instead of on top of them. */
-    bottom: calc(var(--nx-space-4) + 6rem);
-    inline-size: 200px;
-    block-size: 140px;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--nx-radius-3);
-    background: var(--surface-2);
-    touch-action: none;
-    cursor: pointer;
-  }
-
-  /* `M` hides the minimap; a canvas is display:block by default, so `hidden` needs saying. */
-  .nx-minimap[hidden] {
-    display: none;
-  }
-
   .nx-groups-panel,
   .nx-layers-panel,
   .nx-ask-panel {
@@ -603,24 +585,6 @@
   .nx-layers-list li[data-hidden='true'] .nx-layers-title {
     opacity: 0.6;
     text-decoration: line-through;
-  }
-
-  .nx-zoom-cluster {
-    position: absolute;
-    right: var(--nx-space-4);
-    bottom: var(--nx-space-4);
-    display: flex;
-    align-items: center;
-    gap: var(--nx-space-2);
-    padding: var(--nx-space-2);
-    background: var(--surface-2);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--nx-radius-3);
-  }
-
-  /* Stack a second cluster (edge bundling) above the zoom one instead of on top of it. */
-  .nx-zoom-cluster + .nx-zoom-cluster {
-    bottom: calc(var(--nx-space-4) + 3rem);
   }
 
   /* ---------------------------------------------------------------- capture (P6) */
@@ -735,17 +699,19 @@
   .nx-layout-toast {
     position: absolute;
     inset-inline-start: 50%;
-    inset-block-end: var(--nx-space-6);
+    inset-block-start: var(--nx-space-4);
+    max-inline-size: calc(100% - var(--nx-space-8));
     transform: translateX(-50%);
     z-index: 3;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--nx-space-3);
     padding: var(--nx-space-2) var(--nx-space-4);
     background: var(--surface-2);
     border: 1px solid var(--border-subtle);
     border-radius: var(--nx-radius-3);
-    color: var(--fg-default);
+    color: var(--fg-primary);
     font: var(--text-body-sm);
   }
 
@@ -1446,11 +1412,6 @@
     /* Nothing selected means the sheet has nothing to show — it would just cover the canvas. */
     .nx-board-main > .nx-inspector[data-empty='true'] {
       display: none;
-    }
-
-    .nx-zoom-cluster {
-      right: var(--nx-space-2);
-      bottom: var(--nx-space-2);
     }
 
     .nx-rail-row,

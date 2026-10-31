@@ -1,5 +1,11 @@
 # 05 — CANVAS ENGINE
 
+> **Canvas navigation refinement (2026-10-31).** One rounded black/silver panel replaces the
+> browser-styled minimap, range and zoom clusters. It uses explicit Manrope typography, a clipped
+> minimap, animated folding with an inert closed state, keyboard-operable line grouping, useful
+> animated zoom stops and a fit action. Reduced motion is respected; the existing engine owns
+> minimap navigation. Layout confirmation sits above the canvas instead of covering the controls.
+
 ## Scope
 
 Defines `packages/canvas-engine`: the framework-agnostic rendering and interaction engine that
