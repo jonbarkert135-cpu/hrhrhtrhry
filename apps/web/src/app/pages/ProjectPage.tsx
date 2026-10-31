@@ -1,7 +1,7 @@
 import { DashboardIcon, PlusIcon, LockClosedIcon } from '@radix-ui/react-icons';
 import { capabilities } from '../../mode/appMode';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Banner, Button, Skeleton } from '@nexus/ui';
 import {
   useBoards,
@@ -68,17 +68,22 @@ export default function ProjectPage() {
               : `${String(items.length)} ${items.length === 1 ? 'board' : 'boards'} to collect, connect and investigate`}
           </p>
         </div>
-        {items.length > 0 ? (
-          <Button
-            variant="primary"
-            icon={<PlusIcon aria-hidden="true" />}
-            onClick={() => setOpen(true)}
-            disabled={!mutable}
-            title={mutable ? undefined : 'Viewers cannot create boards'}
-          >
-            New board
-          </Button>
-        ) : null}
+        <div className="nx-inline">
+          <Link className="nx-btn" data-variant="secondary" to={`/p/${id}/data`}>
+            Data collections
+          </Link>
+          {items.length > 0 ? (
+            <Button
+              variant="primary"
+              icon={<PlusIcon aria-hidden="true" />}
+              onClick={() => setOpen(true)}
+              disabled={!mutable}
+              title={mutable ? undefined : 'Viewers cannot create boards'}
+            >
+              New board
+            </Button>
+          ) : null}
+        </div>
       </header>
 
       {items.length === 0 ? (

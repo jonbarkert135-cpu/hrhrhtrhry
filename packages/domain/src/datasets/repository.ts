@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   DataCollectionSchema,
+  FORM_TEMPLATE_FORMAT,
   datasetJson,
   DatasetIdSchema,
   DatasetItemSchema,
@@ -227,6 +228,15 @@ export function prepareDatasetChanges(
       throw new DatasetError('CONFLICT', 'Deleted item IDs cannot be reused');
     if (change.op === 'restore' && old?.deletedAt === null)
       throw new DatasetError('CONFLICT', 'Item is not deleted');
+    if (
+      old?.kind === 'form_template' &&
+      old.templateFormat === FORM_TEMPLATE_FORMAT &&
+      change.op === 'put'
+    )
+      throw new DatasetError(
+        'CONFLICT',
+        'Published form versions are immutable; create a new version',
+      );
     if (old?.kind === 'version' && old.sealedAt !== null)
       throw new DatasetError('CONFLICT', 'Sealed versions are immutable');
     if (change.op !== 'put' && old === undefined)

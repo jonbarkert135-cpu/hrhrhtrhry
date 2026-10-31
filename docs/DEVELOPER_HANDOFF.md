@@ -51,6 +51,11 @@ Which subsystems exist is decided in `packages/config/src/appMode.ts` and nowher
 
 Local save acknowledgement waits for an IndexedDB transaction to complete behind the Yjs provider's writes. Retry keeps the same in-memory document and reattaches its persistence provider.
 
+Collection forms: Project → Data collections uses `app/data/DataPage.tsx` and the existing
+`data/datasets/{local,server}.ts` adapters, independently of Y.Doc. The builder publishes immutable
+`raven.form.v1` definitions; preview input is memory-only. See [ADR-005](adr/ADR-005-form-template-versions.md).
+Manual record entry and file-to-record import remain the next Data Intelligence slices.
+
 ## 5. Conventions that are enforced, not suggested
 
 - Conventional commits (`commitlint.config.cjs`).

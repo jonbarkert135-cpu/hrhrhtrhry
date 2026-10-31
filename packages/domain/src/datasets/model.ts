@@ -147,24 +147,57 @@ export const DatasetSavedViewSchema = base.extend({
     .max(32),
   columns: z.array(DatasetIdSchema).max(128),
 });
-export const FormTemplateSchema = base.extend({
-  kind: z.literal('form_template'),
-  name: z.string().min(1).max(200),
-  version: z.number().int().positive(),
-  fields: z
-    .array(
-      z
-        .object({
-          id: DatasetIdSchema,
-          label: z.string().min(1).max(200),
-          type: z.enum(['text', 'number', 'boolean', 'date', 'email', 'phone', 'url']),
-          required: z.boolean(),
-          multiple: z.boolean(),
-        })
-        .passthrough(),
-    )
-    .max(128),
+export const FORM_TEMPLATE_FORMAT = 'raven.form.v1' as const;
+export const FormVersionMetadataSchema = z.object({
+  templateFormat: z.literal(FORM_TEMPLATE_FORMAT),
+  familyId: DatasetIdSchema.max(96),
 });
+export const FormFieldSchema = z
+  .object({
+    id: DatasetIdSchema,
+    label: z.string().min(1).max(200),
+    type: z.enum(['text', 'number', 'boolean', 'date', 'email', 'phone', 'url']),
+    required: z.boolean(),
+    multiple: z.boolean(),
+  })
+  .passthrough();
+export const FormTemplateSchema = base
+  .extend({
+    kind: z.literal('form_template'),
+    name: z.string().min(1).max(200),
+    version: z.number().int().positive(),
+    fields: z.array(FormFieldSchema).max(128),
+  })
+  .superRefine((form, context) => {
+    if (form.templateFormat !== FORM_TEMPLATE_FORMAT) return;
+    const metadata = FormVersionMetadataSchema.safeParse(form);
+    if (!metadata.success) {
+      context.addIssue({ code: 'custom', message: 'Invalid form version metadata' });
+      return;
+    }
+    if (form.id !== `${metadata.data.familyId}_v${String(form.version)}`)
+      context.addIssue({
+        code: 'custom',
+        path: ['id'],
+        message: 'Form ID must identify its family and version',
+      });
+    if (
+      !form.name.trim() ||
+      form.fields.length === 0 ||
+      form.fields.some((field) => !field.label.trim())
+    )
+      context.addIssue({
+        code: 'custom',
+        path: ['fields'],
+        message: 'A published form needs a name and at least one named field',
+      });
+    if (new Set(form.fields.map((field) => field.id)).size !== form.fields.length)
+      context.addIssue({
+        code: 'custom',
+        path: ['fields'],
+        message: 'Form field IDs must be unique',
+      });
+  });
 export const DatasetMemberSchema = base.extend({
   kind: z.literal('member'),
   userId: DatasetIdSchema,

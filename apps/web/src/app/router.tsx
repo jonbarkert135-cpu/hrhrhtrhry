@@ -18,6 +18,7 @@ const WelcomePage = lazy(() => import('./welcome/WelcomePage'));
 const LoginPage = lazy(() => import('./auth/LoginPage'));
 const SignupPage = lazy(() => import('./auth/SignupPage'));
 const ProjectPage = lazy(() => import('./pages/ProjectPage'));
+const DataPage = lazy(() => import('./data/DataPage'));
 const BoardPage = lazy(() => import('./pages/BoardPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const SystemPage = lazy(() => import('../system/SystemPage'));
@@ -116,6 +117,16 @@ export function AppRoutes() {
               <RequireAuth>
                 <ShellContainer>
                   <BoardPage />
+                </ShellContainer>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/p/:projectId/data/:collectionId?"
+            element={
+              <RequireAuth>
+                <ShellContainer>
+                  <DataPage />
                 </ShellContainer>
               </RequireAuth>
             }

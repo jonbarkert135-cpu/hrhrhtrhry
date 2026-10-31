@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IDBFactory, IDBIndex, IDBCursor } from 'fake-indexeddb';
 import * as Y from 'yjs';
-import { Sha256, type DatasetItem } from '@nexus/domain';
+import { Sha256, createFormVersion, personFormFields, type DatasetItem } from '@nexus/domain';
 import {
   collectionInput,
   datasetFixture,
@@ -65,6 +65,67 @@ afterEach(async () => {
 const put = (items: DatasetItem[]) => items.map((item) => ({ op: 'put' as const, item }));
 
 describe('offline dataset repository', () => {
+  it('publishes immutable form versions atomically across tabs and keeps existing record definitions', async () => {
+    const repo = create();
+    const collection = await repo.createCollection(collectionInput());
+    const first = createFormVersion({
+      collection,
+      familyId: 'person',
+      version: 1,
+      name: 'Person',
+      fields: personFormFields(),
+      now: DATASET_TIME,
+    });
+    const fixture = datasetFixture();
+    const record = fixture.find((item) => item.kind === 'record')!;
+    await repo.commit(
+      collection.id,
+      1,
+      put([
+        first,
+        ...fixture.filter((item) => item.kind !== 'record'),
+        { ...record, templateId: first.id },
+      ]),
+    );
+    const second = createFormVersion({
+      collection,
+      familyId: 'person',
+      version: 2,
+      name: 'Person',
+      fields: first.fields.map((field) =>
+        field.id === 'full_name' ? { ...field, type: 'email' as const } : field,
+      ),
+      now: DATASET_TIME,
+      previous: first,
+    });
+    const results = await Promise.allSettled([
+      repo.commit(collection.id, 2, put([second])),
+      create().commit(collection.id, 2, put([second])),
+    ]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    const before = await repo.getCollection(collection.id);
+    await expect(
+      repo.commit(collection.id, 3, put([{ ...first, name: 'Overwrite' }])),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+    expect(await repo.getCollection(collection.id)).toEqual(before);
+    await repo.close();
+    const reopened = create();
+    expect((await reopened.getItem(collection.id, 'record')).templateId).toBe(first.id);
+    const forms = await reopened.listItems(collection.id, 'form_template');
+    expect(forms.items.map((item) => item.id)).toEqual([first.id, second.id]);
+    const [v1, v2] = forms.items;
+    if (v1?.kind !== 'form_template' || v2?.kind !== 'form_template')
+      throw new Error('Expected two forms');
+    expect(v1.fields.find((field) => field.id === 'full_name')?.type).toBe('text');
+    expect(v2.fields.find((field) => field.id === 'full_name')?.type).toBe('email');
+    await expect(
+      reopened.commit(collection.id, 3, [{ op: 'delete', id: first.id }]),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+    await reopened.commit(collection.id, 3, [{ op: 'delete', id: second.id }]);
+    await reopened.commit(collection.id, 4, [{ op: 'restore', id: second.id }]);
+    expect((await reopened.getItem(collection.id, second.id)).name).toBe('Person');
+  });
+
   it('restores soft-deleted records atomically and collections only within retention', async () => {
     const repo = create();
     await repo.createCollection(collectionInput());

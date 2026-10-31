@@ -1849,3 +1849,21 @@ subdoc design — see `RAVEN-SPEC/20_ROADMAP.md` P8's status note for the reason
 are not implemented — the current projector relies on Hocuspocus's own one-room-one-writer
 guarantee instead, which is sufficient for a single sync pod but not yet proven under the
 multi-pod Redis fanout scenario in §11's acceptance criteria.
+
+## Data Intelligence 02A — collection form definitions (2026-10-31)
+
+Коллекции доступны из страницы проекта без создания доски. Два существующих DatasetRepository
+адаптера поддерживают создание коллекции, Person/custom builder, типизированный временный
+предпросмотр, сохранение и повторное открытие версий. Raven сохраняет чёрно-серебристые токены,
+Manrope, доступные диалоги и reduced motion; отдельный canvas не создаётся.
+
+Новые определения `raven.form.v1` неизменяемы после публикации; стабильные ID полей и отдельный
+ID каждой версии сохраняют смысл существующих записей. Старые шаблоны и extension fields
+совместимы без миграции. Preview values не сохраняются. Сервер повторно проверяет joined org
+membership и права коллекции; клиент разделяет query/state scope по actor/org/project.
+
+Решение и проверки: [ADR-005](../docs/adr/ADR-005-form-template-versions.md),
+`packages/domain/test/forms.test.ts`, `apps/web/src/app/data/data.test.tsx`,
+`apps/api/test/datasets.integration.test.ts`, `e2e/workspace/forms.spec.ts`.
+**Этап 02 частично готов**: ввод/редактирование записей с обязательным источником каждого факта —
+следующий вертикальный сценарий 02B; import/Data Hub/graph projection не объявлены готовыми.

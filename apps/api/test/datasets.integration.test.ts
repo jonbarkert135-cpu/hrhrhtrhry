@@ -1,6 +1,6 @@
 /** Real Postgres contract tests; uses the disposable database provisioned by the unit CI job. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { newId } from '@nexus/domain';
+import { newId, createFormVersion, personFormFields } from '@nexus/domain';
 import { prisma, Prisma } from '@nexus/db';
 import {
   collectionInput,
@@ -92,6 +92,101 @@ afterAll(async () => {
 });
 
 describe('Prisma dataset repository and API', () => {
+  it('publishes immutable form versions over the API and reports exact joined permissions', async () => {
+    const c = await create();
+    const { api } = caller();
+    const first = createFormVersion({
+      collection: c,
+      familyId: 'person',
+      version: 1,
+      name: 'Person',
+      fields: personFormFields(),
+      now: DATASET_TIME,
+    });
+    expect(await api.access({ projectId, collectionId: c.id })).toEqual({ canWrite: true });
+    await expect(
+      caller(editorId, 'editor').api.access({ projectId, collectionId: c.id }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await api.commit({
+      projectId,
+      collectionId: c.id,
+      revision: 1,
+      changes: [
+        { op: 'put', item: first },
+        {
+          op: 'put',
+          item: datasetItem(
+            { id: 'form-reader', kind: 'member', userId: editorId, role: 'viewer' },
+            c.id,
+          ),
+        },
+      ],
+    });
+    expect(await caller(editorId, 'editor').api.access({ projectId, collectionId: c.id })).toEqual({
+      canWrite: false,
+    });
+    await expect(
+      caller(editorId, 'editor').api.commit({
+        projectId,
+        collectionId: c.id,
+        revision: 2,
+        changes: [{ op: 'put', item: { ...first, name: 'Forbidden edit' } }],
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    const second = createFormVersion({
+      collection: c,
+      familyId: 'person',
+      version: 2,
+      name: 'Person',
+      fields: first.fields.map((field) => ({ ...field, label: `Updated ${field.label}` })),
+      now: DATASET_TIME,
+      previous: first,
+    });
+    const result = await Promise.allSettled([
+      api.commit({
+        projectId,
+        collectionId: c.id,
+        revision: 2,
+        changes: [{ op: 'put', item: second }],
+      }),
+      api.commit({
+        projectId,
+        collectionId: c.id,
+        revision: 2,
+        changes: [{ op: 'put', item: second }],
+      }),
+    ]);
+    expect(result.filter((entry) => entry.status === 'fulfilled')).toHaveLength(1);
+    await expect(
+      api.commit({
+        projectId,
+        collectionId: c.id,
+        revision: 3,
+        changes: [{ op: 'put', item: { ...first, name: 'Overwrite' } }],
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+    expect((await api.get({ projectId, collectionId: c.id })).revision).toBe(3);
+    expect(
+      (await api.items({ projectId, collectionId: c.id, kind: 'form_template' })).items,
+    ).toMatchObject([
+      { id: first.id, name: 'Person' },
+      { id: second.id, name: 'Person' },
+    ]);
+    await expect(
+      caller(otherUser, 'owner', otherOrg, otherProject).api.access({
+        projectId: otherProject,
+        collectionId: c.id,
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(api.access({ projectId, collectionId: '' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+    await api.remove({ projectId, collectionId: c.id, revision: 3 });
+    await expect(api.access({ projectId, collectionId: c.id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
   it('restores records and a collection without losing provenance or allowing expired/unauthorized restore', async () => {
     const c = await create();
     await repo().commit(c.id, 1, puts(c.id));

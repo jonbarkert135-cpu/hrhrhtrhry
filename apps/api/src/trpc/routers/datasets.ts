@@ -64,6 +64,21 @@ async function call<T>(
   }
 }
 export const datasetsRouter = router({
+  access: orgProcedure('viewer')
+    .input(entry)
+    .query(({ ctx, input }) =>
+      call(ctx, input, async (repo) => {
+        await repo.assertAccess(input.collectionId, false);
+        try {
+          await repo.assertAccess(input.collectionId, true);
+          return { canWrite: true };
+        } catch (error) {
+          if (error instanceof DatasetError && error.code === 'FORBIDDEN')
+            return { canWrite: false };
+          throw error;
+        }
+      }),
+    ),
   list: orgProcedure('viewer')
     .input(scope.extend({ page }))
     .query(({ ctx, input }) => call(ctx, input, (repo) => repo.listCollections(input.page))),
