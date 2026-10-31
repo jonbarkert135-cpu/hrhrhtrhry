@@ -33,10 +33,11 @@ test('canvas navigation operates the real camera and groups lines from the keybo
 });
 
 test('map folding stays inside a mobile viewport and respects reduced motion', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   if (process.env.E2E_UI_MODE === 'local') await page.goto('/');
   else await openNewBoard(page);
+  // The shared board setup asserts its desktop node counter before the mobile bar hides it.
+  await page.setViewportSize({ width: 390, height: 844 });
   const dock = page.getByRole('region', { name: 'Canvas navigation' });
   const toggle = dock.getByRole('button', { name: 'Toggle minimap' });
   const canvas = await page.getByTestId('canvas-minimap').elementHandle();
