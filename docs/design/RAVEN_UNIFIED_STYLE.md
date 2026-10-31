@@ -25,3 +25,14 @@ It excludes tests and does not rewrite user records, URLs, quotations or licence
 Baseline examples: `WelcomePage.tsx:43` ended the product name with a period; `ExecutionView.tsx:25`
 used emoji for state; `nodeStore.ts:44` re-read the entire node list on every content update.
 Brand silver and the investigator's dense canvas are deliberate choices, not generic palette findings.
+
+## Canvas navigation refinement (2026-10-31)
+
+The screenshot review identified three browser-styled floating controls in `CanvasHost.tsx`
+and absolute-offset rules in `app.css`. They now form one black instrument panel: explicitly
+weighted Manrope controls, a clipped 200×140 minimap, silver range feedback and a separate fit
+action. The map folds with a finite grid/opacity transition, keeps its canvas mounted and becomes
+inert when closed. Reduced motion removes the panel animation. Existing minimap pointer/wheel
+behaviour and the M shortcut remain; zoom buttons now select useful camera stops with animation,
+rather than passing a one-pixel wheel delta. Layout confirmation moves above the canvas so it
+cannot obscure the navigation controls. No new dependencies or continuous animation loops.

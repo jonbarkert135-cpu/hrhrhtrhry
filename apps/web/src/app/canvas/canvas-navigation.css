@@ -1,0 +1,336 @@
+/* A single instrument panel: map, relationship density and camera controls. */
+.nx-canvas-navigator {
+  position: absolute;
+  inset-inline-end: var(--nx-space-4);
+  inset-block-end: var(--nx-space-4);
+  z-index: 2;
+  inline-size: calc(200px + var(--nx-space-4) * 2 + 4px);
+  padding: var(--nx-space-3) var(--nx-space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--nx-radius-5);
+  background: var(--surface-1);
+  box-shadow:
+    inset 0 1px 0 var(--border-subtle),
+    var(--nx-shadow-3);
+  color: var(--fg-primary);
+  font: var(--text-body-sm);
+  font-weight: var(--nx-weight-semibold);
+  -webkit-font-smoothing: antialiased;
+  animation: nx-navigation-enter var(--nx-dur-5) var(--nx-ease-out) both;
+}
+
+.nx-canvas-navigator button,
+.nx-canvas-navigator select {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+}
+
+.nx-canvas-navigator svg {
+  flex: 0 0 auto;
+  inline-size: var(--nx-icon-1);
+  block-size: var(--nx-icon-1);
+}
+
+.nx-map-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  inline-size: 100%;
+  min-block-size: var(--nx-size-md);
+  padding: 0 var(--nx-space-2);
+  border-radius: var(--nx-radius-3);
+  background: transparent;
+  transition: background var(--motion-feedback-duration) var(--nx-ease-standard);
+}
+
+.nx-map-toggle > span {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-3);
+}
+
+.nx-map-toggle > span > svg {
+  color: var(--fg-secondary);
+}
+
+.nx-map-chevron {
+  color: var(--fg-muted);
+  transform: rotate(180deg);
+  transition: transform var(--motion-panel-duration) var(--nx-ease-inout);
+}
+
+.nx-map-toggle[aria-expanded='false'] .nx-map-chevron {
+  transform: rotate(0);
+}
+
+.nx-map-panel {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows var(--motion-panel-duration) var(--nx-ease-inout),
+    opacity var(--motion-panel-duration) var(--nx-ease-standard);
+}
+
+.nx-map-panel[data-expanded='false'] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nx-map-clip {
+  overflow: hidden;
+  min-block-size: 0;
+}
+
+.nx-map-frame {
+  position: relative;
+  margin-block: var(--nx-space-3) var(--nx-space-4);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--nx-radius-4);
+  background: var(--surface-inset);
+  line-height: 0;
+}
+
+.nx-canvas-navigator .nx-minimap {
+  display: block;
+  inline-size: 200px;
+  block-size: 140px;
+  border-radius: inherit;
+  touch-action: none;
+  cursor: grab;
+}
+
+.nx-canvas-navigator .nx-minimap:active {
+  cursor: grabbing;
+}
+
+.nx-map-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  color: var(--fg-secondary);
+  font: var(--text-label);
+  background: var(--surface-inset);
+  pointer-events: none;
+}
+
+.nx-line-grouping {
+  padding: var(--nx-space-4) var(--nx-space-2) var(--nx-space-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.nx-navigation-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-4);
+  color: var(--fg-secondary);
+}
+
+.nx-navigation-label output {
+  min-inline-size: var(--nx-space-8);
+  padding: var(--nx-space-1) var(--nx-space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--nx-radius-full);
+  background: var(--surface-2);
+  color: var(--fg-primary);
+  text-align: center;
+  font: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.nx-grouping-range {
+  display: block;
+  inline-size: 100%;
+  block-size: var(--nx-size-sm);
+  margin: var(--nx-space-2) 0 0;
+  padding: 0;
+  appearance: none;
+  border: 0;
+  border-radius: var(--nx-radius-full);
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.nx-grouping-range::-webkit-slider-runnable-track {
+  block-size: var(--nx-space-2);
+  border-radius: var(--nx-radius-full);
+  background: linear-gradient(
+    to right,
+    var(--accent-solid) var(--nx-range-fill),
+    var(--surface-4) var(--nx-range-fill)
+  );
+}
+
+.nx-grouping-range::-moz-range-track {
+  block-size: var(--nx-space-2);
+  border-radius: var(--nx-radius-full);
+  background: var(--surface-4);
+}
+
+.nx-grouping-range::-moz-range-progress {
+  block-size: var(--nx-space-2);
+  border-radius: var(--nx-radius-full);
+  background: var(--accent-solid);
+}
+
+.nx-grouping-range::-webkit-slider-thumb {
+  appearance: none;
+  inline-size: var(--nx-space-5);
+  block-size: var(--nx-space-5);
+  margin-block-start: calc((var(--nx-space-2) - var(--nx-space-5)) / 2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--nx-radius-full);
+  background: var(--accent-solid);
+  box-shadow: var(--nx-shadow-2);
+  transition:
+    transform var(--motion-feedback-duration) var(--nx-ease-out),
+    background var(--motion-feedback-duration);
+}
+
+.nx-grouping-range::-moz-range-thumb {
+  inline-size: var(--nx-space-5);
+  block-size: var(--nx-space-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--nx-radius-full);
+  background: var(--accent-solid);
+  box-shadow: var(--nx-shadow-2);
+  transition:
+    transform var(--motion-feedback-duration) var(--nx-ease-out),
+    background var(--motion-feedback-duration);
+}
+
+.nx-grouping-range:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+  background: var(--accent-solid-hover);
+}
+
+.nx-grouping-range:active::-moz-range-thumb {
+  transform: scale(1.15);
+  background: var(--accent-solid-hover);
+}
+
+.nx-navigation-zoom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-2);
+  padding-block-start: var(--nx-space-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.nx-navigation-button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: var(--nx-size-md);
+  block-size: var(--nx-size-md);
+  padding: 0;
+  border-radius: var(--nx-radius-3);
+  background: transparent;
+  transition:
+    background var(--motion-feedback-duration) var(--nx-ease-standard),
+    color var(--motion-feedback-duration) var(--nx-ease-standard),
+    transform var(--motion-feedback-duration) var(--nx-ease-out);
+}
+
+.nx-navigation-button:disabled {
+  color: var(--fg-disabled);
+  cursor: default;
+}
+
+.nx-navigation-button:active:not(:disabled) {
+  transform: scale(0.92);
+  background: var(--surface-active);
+}
+
+.nx-zoom-picker {
+  position: relative;
+  min-inline-size: 0;
+  flex: 1 1 auto;
+}
+
+.nx-zoom-picker select {
+  inline-size: 100%;
+  min-block-size: var(--nx-size-md);
+  padding-inline: var(--nx-space-3) var(--nx-space-7);
+  appearance: none;
+  border-radius: var(--nx-radius-3);
+  background: var(--surface-2);
+  font-weight: var(--nx-weight-bold);
+  font-variant-numeric: tabular-nums;
+  transition: background var(--motion-feedback-duration) var(--nx-ease-standard);
+}
+
+.nx-zoom-picker > svg {
+  position: absolute;
+  inset-inline-end: var(--nx-space-2);
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  color: var(--fg-secondary);
+  pointer-events: none;
+}
+
+.nx-navigation-divider {
+  align-self: stretch;
+  inline-size: 1px;
+  margin-block: var(--nx-space-3);
+  background: var(--border-subtle);
+}
+
+.nx-canvas-navigator :is(button, select, input):focus-visible {
+  outline: var(--nx-border-heavy) solid var(--border-focus);
+  outline-offset: var(--nx-space-1);
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .nx-map-toggle:hover,
+  .nx-navigation-button:hover:not(:disabled),
+  .nx-zoom-picker select:hover {
+    background: var(--surface-active);
+  }
+}
+
+@keyframes nx-navigation-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--nx-space-3));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 760px) {
+  .nx-canvas-navigator {
+    inset-inline-end: var(--nx-space-3);
+    inset-block-end: var(--nx-space-3);
+  }
+  .nx-navigation-button,
+  .nx-map-toggle,
+  .nx-zoom-picker select {
+    min-block-size: var(--nx-size-xl);
+  }
+  .nx-navigation-button {
+    inline-size: var(--nx-size-lg);
+  }
+  .nx-grouping-range {
+    block-size: var(--nx-size-xl);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-canvas-navigator,
+  .nx-canvas-navigator * {
+    animation: none;
+    transition: none;
+  }
+}

@@ -1,5 +1,11 @@
 # Raven — 20 — IMPLEMENTATION ROADMAP (open phases + shipped ledger)
 
+> **Canvas navigation refinement (2026-10-31).** One rounded black/silver panel replaces the
+> browser-styled minimap, range and zoom clusters. It uses explicit Manrope typography, a clipped
+> minimap, animated folding with an inert closed state, keyboard-operable line grouping, useful
+> animated zoom stops and a fit action. Reduced motion is respected; the existing engine owns
+> minimap navigation. Layout confirmation sits above the canvas instead of covering the controls.
+
 > **Unified Raven interface (2026-10-30).** The owner's `human-web-design` direction now applies
 > across the workspace and landing: heavier self-hosted Manrope, restrained black/silver surfaces,
 > authored display copy without terminal periods, and real Radix state icons. The public footer

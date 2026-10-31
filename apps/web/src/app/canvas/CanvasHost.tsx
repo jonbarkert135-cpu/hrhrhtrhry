@@ -1,18 +1,26 @@
 /**
  * The board surface: one canvas, one absolutely-positioned DOM overlay for near-zoom node hosts,
- * the zoom cluster and the empty-board teaching state (20_ROADMAP P2 §6).
+ * the navigation dock and the empty-board teaching state (20_ROADMAP P2 §6).
  *
- * React renders this shell exactly once per mount; every frame after that is painted by the engine.
+ * The engine owns frame geometry; React updates the navigation readout on camera changes.
  */
 
-import { Share1Icon } from '@radix-ui/react-icons';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ChevronDownIcon,
+  EnterFullScreenIcon,
+  MinusIcon,
+  PlusIcon,
+  Share1Icon,
+  ViewGridIcon,
+} from '@radix-ui/react-icons';
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import './canvas-navigation.css';
 
 import { useCanvasEngine } from './useCanvasEngine';
 import { MINIMAP_HEIGHT, MINIMAP_WIDTH, useMinimap } from './useMinimap';
 import type { Engine, Intent, SceneSnapshot } from '@nexus/canvas-engine';
 
-const ZOOM_STOPS = [0.25, 0.5, 1, 2] as const;
+const ZOOM_STOPS = [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4] as const;
 
 export interface CanvasHostProps {
   scene?: SceneSnapshot;
@@ -59,6 +67,8 @@ export function CanvasHost({
     ...(onIntent === undefined ? {} : { onIntent }),
   });
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const minimapId = useId();
+  const bundlingId = useId();
   const minimapRef = useRef<HTMLCanvasElement | null>(null);
   // Called after useCanvasEngine so the engine already exists when this effect runs.
   useMinimap(engineRef, minimapRef);
@@ -94,7 +104,7 @@ export function CanvasHost({
   }, [canvasRef]);
 
   const zoomTo = useCallback(
-    (value: number) => engineRef.current?.camera.zoomTo(value, centre()),
+    (value: number) => engineRef.current?.camera.zoomTo(value, centre(), { animate: true }),
     [engineRef, centre],
   );
 
@@ -116,15 +126,6 @@ export function CanvasHost({
         {/* Node hosts are mounted here by the engine's overlay; React never touches its children. */}
         <div ref={overlayRef} data-testid="canvas-overlay" className="nx-canvas-overlay" />
         {children?.({ slotOf, screenOf })}
-        <canvas
-          ref={minimapRef}
-          data-testid="canvas-minimap"
-          className="nx-minimap"
-          width={MINIMAP_WIDTH}
-          height={MINIMAP_HEIGHT}
-          hidden={!minimapVisible}
-          aria-label="Board minimap. Click or drag to move the view, scroll to zoom"
-        />
         {nodeCount === 0 ? (
           <div className="nx-canvas-empty" data-testid="canvas-empty">
             <span className="nx-empty-emblem" aria-hidden="true">
@@ -136,59 +137,134 @@ export function CanvasHost({
         ) : null}
       </div>
 
-      <div className="nx-zoom-cluster" role="group" aria-label="Zoom controls">
+      <section className="nx-canvas-navigator" aria-label="Canvas navigation">
         <button
           type="button"
-          onClick={() => engineRef.current?.camera.zoomBy(-1, centre())}
-          aria-label="Zoom out"
+          className="nx-map-toggle"
+          aria-label="Toggle minimap"
+          aria-expanded={minimapVisible}
+          aria-controls={minimapId}
+          aria-keyshortcuts="M"
+          onClick={() => setMinimapVisible((visible) => !visible)}
         >
-          −
+          <span>
+            <ViewGridIcon aria-hidden="true" />
+            Overview
+          </span>
+          <ChevronDownIcon className="nx-map-chevron" aria-hidden="true" />
         </button>
-        <select
-          aria-label="Zoom level"
-          value={ZOOM_STOPS.find((s) => Math.abs(s - zoom) < 0.001) ?? ''}
-          onChange={(event) => {
-            const value = event.target.value;
-            if (value === 'fit') engineRef.current?.camera.fitAll();
-            else zoomTo(Number(value));
-          }}
+        <div
+          id={minimapId}
+          className="nx-map-panel"
+          data-expanded={minimapVisible}
+          aria-hidden={!minimapVisible}
+          inert={!minimapVisible}
         >
-          <option value="">{Math.round(zoom * 100)}%</option>
-          {ZOOM_STOPS.map((stop) => (
-            <option key={stop} value={stop}>
-              {stop * 100}%
-            </option>
-          ))}
-          <option value="fit">Fit</option>
-        </select>
-        <button
-          type="button"
-          onClick={() => engineRef.current?.camera.zoomBy(1, centre())}
-          aria-label="Zoom in"
-        >
-          +
-        </button>
-      </div>
-
-      <div className="nx-zoom-cluster" role="group" aria-label="Edge bundling">
-        <label htmlFor="edge-bundling">Bundling</label>
-        <input
-          id="edge-bundling"
-          type="range"
-          min={0}
-          max={100}
-          step={10}
-          value={bundleDensity * 100}
-          onChange={(event) => {
-            const next = Number(event.target.value) / 100;
-            setDensity(next);
-            setBundleDensity(next);
-          }}
-        />
-        <span className="nx-card-meta">
-          {bundleDensity === 0 ? 'off' : `${String(Math.round(bundleDensity * 100))}%`}
-        </span>
-      </div>
+          <div className="nx-map-clip">
+            <div className="nx-map-frame">
+              <canvas
+                ref={minimapRef}
+                data-testid="canvas-minimap"
+                className="nx-minimap"
+                width={MINIMAP_WIDTH}
+                height={MINIMAP_HEIGHT}
+                aria-label="Board minimap. Click or drag to move the view, scroll to zoom"
+              />
+              {nodeCount === 0 ? (
+                <span className="nx-map-empty">Your graph appears here</span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        <div className="nx-line-grouping" role="group" aria-label="Edge bundling">
+          <div className="nx-navigation-label">
+            <label htmlFor={bundlingId}>Line grouping</label>
+            <output htmlFor={bundlingId} aria-live="off">
+              {bundleDensity === 0 ? 'Off' : `${String(Math.round(bundleDensity * 100))}%`}
+            </output>
+          </div>
+          <input
+            id={bundlingId}
+            className="nx-grouping-range"
+            type="range"
+            min={0}
+            max={100}
+            step={10}
+            value={bundleDensity * 100}
+            aria-valuetext={
+              bundleDensity === 0 ? 'Off' : `${String(Math.round(bundleDensity * 100))}%`
+            }
+            style={{ '--nx-range-fill': `${String(bundleDensity * 100)}%` } as CSSProperties}
+            onChange={(event) => {
+              const next = Number(event.target.value) / 100;
+              setDensity(next);
+              setBundleDensity(next);
+            }}
+          />
+        </div>
+        <div className="nx-navigation-zoom" role="group" aria-label="Zoom controls">
+          <button
+            type="button"
+            className="nx-navigation-button"
+            disabled={zoom <= ZOOM_STOPS[0] + 0.001}
+            onClick={() => {
+              const current = engineRef.current?.camera.state.zoom ?? zoom;
+              zoomTo(ZOOM_STOPS.findLast((stop) => stop < current - 0.001) ?? ZOOM_STOPS[0]);
+            }}
+            aria-label="Zoom out"
+            title="Zoom out"
+          >
+            <MinusIcon aria-hidden="true" />
+          </button>
+          <div className="nx-zoom-picker">
+            <select
+              aria-label="Zoom level"
+              value={ZOOM_STOPS.find((stop) => Math.abs(stop - zoom) < 0.001) ?? ''}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value === 'fit') engineRef.current?.camera.fitAll();
+                else zoomTo(Number(value));
+              }}
+            >
+              {!ZOOM_STOPS.some((stop) => Math.abs(stop - zoom) < 0.001) ? (
+                <option value="" disabled>
+                  {Math.round(zoom * 100)}%
+                </option>
+              ) : null}
+              {ZOOM_STOPS.map((stop) => (
+                <option key={stop} value={stop}>
+                  {stop * 100}%
+                </option>
+              ))}
+              <option value="fit">Fit to view</option>
+            </select>
+            <ChevronDownIcon aria-hidden="true" />
+          </div>
+          <button
+            type="button"
+            className="nx-navigation-button"
+            disabled={zoom >= 4 - 0.001}
+            onClick={() => {
+              const current = engineRef.current?.camera.state.zoom ?? zoom;
+              zoomTo(ZOOM_STOPS.find((stop) => stop > current + 0.001) ?? 4);
+            }}
+            aria-label="Zoom in"
+            title="Zoom in"
+          >
+            <PlusIcon aria-hidden="true" />
+          </button>
+          <span className="nx-navigation-divider" aria-hidden="true" />
+          <button
+            type="button"
+            className="nx-navigation-button"
+            onClick={() => engineRef.current?.camera.fitAll()}
+            aria-label="Fit board to view"
+            title="Fit board to view"
+          >
+            <EnterFullScreenIcon aria-hidden="true" />
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
