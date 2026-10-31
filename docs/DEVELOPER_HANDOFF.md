@@ -49,6 +49,8 @@ Which subsystems exist is decided in `packages/config/src/appMode.ts` and nowher
 | Attachments (server)     | `apps/api/src/trpc/routers/files.ts`, `apps/api/src/files/`      |
 | Route guard              | `apps/web/src/app/router.tsx`                                    |
 
+Local save acknowledgement waits for an IndexedDB transaction to complete behind the Yjs provider's writes. Retry keeps the same in-memory document and reattaches its persistence provider.
+
 ## 5. Conventions that are enforced, not suggested
 
 - Conventional commits (`commitlint.config.cjs`).

@@ -1,5 +1,11 @@
 # 25 — IMPLEMENTATION STATUS (единый трекер по дорожной карте)
 
+> **Confirmed local saves (2026-10-31).** `persistence.ts` now acknowledges the completion of
+> a native IndexedDB transaction queued after the provider's writes. It no longer treats a
+> resolved microtask as a completed save. Ordered acknowledgements retain pending edits, aborted
+> confirmations remain errors, and Retry reattaches persistence to the same in-memory Y.Doc.
+> No board format, history scope, database schema or outbound transport changes.
+
 > **Canvas navigation refinement (2026-10-31).** One rounded black/silver panel replaces the
 > browser-styled minimap, range and zoom clusters. It uses explicit Manrope typography, a clipped
 > minimap, animated folding with an inert closed state, keyboard-operable line grouping, useful
