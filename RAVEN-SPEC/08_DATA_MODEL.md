@@ -1,5 +1,11 @@
 # 08 — DATA MODEL
 
+> **Confirmed local saves (2026-10-31).** `persistence.ts` now acknowledges the completion of
+> a native IndexedDB transaction queued after the provider's writes. It no longer treats a
+> resolved microtask as a completed save. Ordered acknowledgements retain pending edits, aborted
+> confirmations remain errors, and Retry reattaches persistence to the same in-memory Y.Doc.
+> No board format, history scope, database schema or outbound transport changes.
+
 ## Scope
 
 Defines every place Raven data lives and how those places stay consistent: the `Y.Doc` schema

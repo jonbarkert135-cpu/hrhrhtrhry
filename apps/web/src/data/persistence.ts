@@ -3,7 +3,7 @@
  * lifecycle and the status machine around it:
  *
  * - attach before first render, so a previously visited board opens with zero network;
- * - a mutation is flushed to IndexedDB within 100 ms (N2) — the provider batches, we never debounce;
+ * - the provider owns writes; a queued read transaction confirms they committed before Saved;
  * - storage failures become an actionable `error` state instead of a silent data loss.
  */
 
@@ -55,6 +55,18 @@ const browserConnectivity = (): NonNullable<PersistenceOptions['connectivity']> 
   },
 });
 
+/** A transaction on the same store queues behind the provider's writes, across connections. */
+function waitForCommittedUpdates(database: IDBDatabase): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction('updates', 'readonly');
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () =>
+      reject(transaction.error ?? new Error('IndexedDB confirmation was aborted'));
+    transaction.onerror = () =>
+      reject(transaction.error ?? new Error('IndexedDB confirmation failed'));
+  });
+}
+
 export function createPersistence(options: PersistenceOptions): PersistenceHandle {
   const now = options.now ?? (() => Date.now());
   const connectivity = options.connectivity ?? browserConnectivity();
@@ -71,40 +83,86 @@ export function createPersistence(options: PersistenceOptions): PersistenceHandl
   };
 
   let provider: IndexeddbPersistence | null = null;
+  let generation = 0;
+  let destroyed = false;
+  let issued = 0;
+  let confirmed = 0;
+  let observedDatabase: IDBDatabase | null = null;
+  let offDatabase = (): void => undefined;
   let resolveLoaded: () => void = () => undefined;
   const whenLoaded = new Promise<void>((resolve) => {
     resolveLoaded = resolve;
   });
 
+  const isCurrent = (current: IndexeddbPersistence, attempt: number): boolean =>
+    !destroyed && provider === current && generation === attempt;
+  const reportError = (error: unknown): void => {
+    // Keep the first specific error (for example quota) when its abort event follows it.
+    if (!destroyed && status.state !== 'error') emit({ type: 'error', error: toSyncError(error) });
+  };
+  const confirm = (
+    current: IndexeddbPersistence,
+    attempt: number,
+    sequence: number,
+    initial = false,
+  ): void => {
+    // Our document listener may precede the provider's listener. Enter the queue only once
+    // all listeners have had a chance to enqueue this update's native write transaction.
+    void Promise.resolve()
+      .then(() => current.whenSynced)
+      .then(async () => {
+        if (!isCurrent(current, attempt)) return;
+        const database = current.db;
+        if (database === null) throw new Error('IndexedDB is not available for save confirmation');
+        if (observedDatabase !== database) {
+          offDatabase();
+          observedDatabase = database;
+          const failed = (event: Event): void => {
+            if (!isCurrent(current, attempt)) return;
+            const target = event.target as IDBTransaction | IDBRequest | null;
+            reportError(target?.error ?? new Error('IndexedDB transaction did not commit'));
+          };
+          database.addEventListener('error', failed);
+          database.addEventListener('abort', failed);
+          offDatabase = () => {
+            database.removeEventListener('error', failed);
+            database.removeEventListener('abort', failed);
+            observedDatabase = null;
+          };
+        }
+        await waitForCommittedUpdates(database);
+        if (!isCurrent(current, attempt)) return;
+        const count = Math.max(0, sequence - confirmed);
+        confirmed = Math.max(confirmed, sequence);
+        for (let i = 0; i < count; i += 1) emit({ type: 'flushed', at: now() });
+        if (initial) {
+          if (count === 0 && status.pending === 0) emit({ type: 'flushed', at: now() });
+          resolveLoaded();
+        }
+      })
+      .catch((error: unknown) => {
+        if (!isCurrent(current, attempt)) return;
+        reportError(error);
+        if (initial) resolveLoaded();
+      });
+  };
+
   const onUpdate = (_update: Uint8Array, origin: unknown): void => {
-    // Updates the provider itself replays into the doc are not new writes.
     if (origin === provider) return;
+    issued += 1;
     emit({ type: 'write' });
-    // y-indexeddb writes synchronously on the next microtask batch; confirm on its `synced` tick.
-    void Promise.resolve().then(() => emit({ type: 'flushed', at: now() }));
+    if (provider !== null) confirm(provider, generation, issued);
   };
 
   const attach = (): void => {
+    const attempt = ++generation;
     try {
-      if (options.createProvider === undefined && globalThis.indexedDB === undefined) {
-        // Private mode or a locked-down browser: run in memory and say so, never throw.
+      if (options.createProvider === undefined && globalThis.indexedDB === undefined)
         throw new Error('IndexedDB is not supported in this browser context');
-      }
       provider = createProvider(boardStoreName(options.boardId), options.doc);
-      provider.on('synced', () => {
-        emit({ type: 'flushed', at: now() });
-        resolveLoaded();
-      });
-      provider.whenSynced
-        .then(() => {
-          resolveLoaded();
-        })
-        .catch((error: unknown) => {
-          emit({ type: 'error', error: toSyncError(error) });
-          resolveLoaded();
-        });
+      confirm(provider, attempt, issued, true);
     } catch (error) {
-      emit({ type: 'error', error: toSyncError(error) });
+      reportError(error);
       resolveLoaded();
     }
   };
@@ -124,10 +182,20 @@ export function createPersistence(options: PersistenceOptions): PersistenceHandl
       return () => listeners.delete(listener);
     },
     retry() {
+      if (destroyed) return;
       emit({ type: 'retry' });
-      if (provider === null) attach();
+      offDatabase();
+      const previous = provider;
+      provider = null;
+      // Reattaching persists the current in-memory Y.Doc as a full snapshot before confirming.
+      // This also recovers edits whose original transaction failed, without dropping the doc.
+      if (previous !== null) void previous.destroy().catch(reportError);
+      attach();
     },
     async destroy() {
+      destroyed = true;
+      generation += 1;
+      offDatabase();
       options.doc.off('update', onUpdate);
       offConnectivity();
       listeners.clear();
