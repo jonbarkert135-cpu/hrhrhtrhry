@@ -13,7 +13,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   ...(process.env.CI ? { workers: 2 } : {}),
   reporter: process.env.CI
-    ? [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]]
+    ? [['list'], ['github'], ['html', { outputFolder: 'playwright-report', open: 'never' }]]
     : [['list']],
   use: {
     baseURL,
